@@ -94,6 +94,7 @@ th.af,td.afb{background:var(--af-bg)} th.ac,td.acb{background:var(--ac-bg)}
 .tips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .tipbtn{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:4px;padding:5px 10px;font:inherit;font-size:.86rem;cursor:pointer}
 .tipbtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tipbtn[aria-pressed="true"] .muted{color:inherit;opacity:.85}
 .cert{font-family:var(--f-mono);font-size:.7rem;padding:0 5px;border-radius:3px;border:1px solid var(--line);color:var(--ink2);white-space:nowrap}
 .formula{font-family:var(--f-mono);font-size:.84rem;background:var(--chip);border-radius:4px;padding:6px 10px;overflow-x:auto;white-space:nowrap}
 .notes p,.notes li{max-width:90ch}
@@ -180,8 +181,13 @@ svg text{fill:var(--ink2);font-family:var(--f-mono);font-size:11px}
           <div class="f"><label for="tip-caf">Portata continua AF [l/s]</label><input id="tip-caf" type="number" min="0" step="0.01"><small>processo, non contemporaneizzata</small></div>
           <div class="f"><label for="tip-cac">Portata continua AC [l/s]</label><input id="tip-cac" type="number" min="0" step="0.01"></div>
         </div>
+        <div class="msg info" id="destHint" hidden></div>
+        <div class="row" style="margin-bottom:8px">
+          <select id="tipModel" aria-label="Modello di tipologia" style="width:auto;max-width:100%"></select>
+          <button class="btn sm pri" id="tipFromModel" type="button">+ Aggiungi da modello</button>
+        </div>
         <div class="row" style="margin-bottom:10px">
-          <button class="btn sm" id="tipAdd" type="button">+ Nuova tipologia</button>
+          <button class="btn sm" id="tipAdd" type="button">+ Tipologia vuota</button>
           <button class="btn sm" id="tipDup" type="button">Duplica</button>
           <button class="btn sm ghost" id="tipDel" type="button">Elimina</button>
           <label class="small muted row" style="gap:5px"><input type="checkbox" id="showAll"> mostra tutti gli apparecchi</label>
@@ -311,6 +317,9 @@ svg text{fill:var(--ink2);font-family:var(--f-mono);font-size:11px}
           <div class="f"><label for="h-k">k serpentino [kcal/h m² °C]</label><select id="h-k" data-k="acs.k"><option value="500">500 – acciaio</option><option value="520">520 – rame</option></select></div>
           <div class="f"><label for="h-fu">Volume utile [%]</label><input type="number" id="h-fu" data-k="acs.fu" step="5"><small>100 = volume teorico Caleffi</small></div>
         </div>
+        <h3>Utenze dalle tipologie</h3>
+        <div class="row" style="margin-bottom:6px"><button class="btn sm pri" type="button" id="acsFromTips">Genera utenze ACS dalla scheda 1</button></div>
+        <p class="small muted" style="margin:0 0 6px">Converte camere, alloggi, docce e rubinetti delle tipologie nelle utenze di punta Caleffi. Cucine e lavanderie vanno aggiunte a mano (coperti, ospiti).</p>
         <h3>Scenari di esempio</h3>
         <div class="row">
           <button class="btn sm" type="button" data-scn="res">Condominio 8 + 16 alloggi</button>
@@ -578,6 +587,38 @@ const DEFAULT=()=>{
   return st;
 };
 function acsRow(key,qty,over){const p=ACSP[key];return Object.assign({id:uid('h'),key,name:p.n,qty,l:p.l,tu:p.tu,tpu:p.tpu,tpr:p.tpr},over||{});}
+// modelli di tipologia per destinazione: n = nome, q = quantità proposta, c = apparecchi
+const TMOD={
+ res:[{n:'Alloggio – 1 bagno con vasca',q:8,c:{lav:1,bid:1,vas:1,wcc:1,lvc:1,lbi:1,lst:1}},{n:'Alloggio – bagno + servizio con doccia',q:16,c:{lav:2,bid:1,vas:1,doc:1,wcc:2,lvc:1,lbi:1,lst:1}},{n:'Monolocale – doccia',q:4,c:{lav:1,doc:1,wcc:1,lvc:1,lbi:1}}],
+ uff:[{n:'Servizio WC + lavabo',q:10,c:{wcc:1,lav:1}},{n:'Blocco servizi uomini',q:4,c:{wcc:2,orf:2,lav:2}},{n:'Blocco servizi donne',q:4,c:{wcc:3,lav:2}},{n:'Angolo ristoro',q:2,c:{lvc:1,lst:1}}],
+ hot:[{n:'Camera con doccia',q:48,c:{lav:1,bid:1,doc:1,wcc:1}},{n:'Camera con vasca',q:12,c:{lav:1,bid:1,vas:1,wcc:1}},{n:'Servizi comuni hall',q:1,c:{wcc:3,orv:2,lav:3}},{n:'Cucina ristorante',q:1,c:{lvk:3,lvc:2,lst:1}},{n:'Lavanderia',q:1,c:{lbi:4,pil:2}}],
+ osp:[{n:'Camera degenza 2 letti',q:30,c:{lav:1,bid:1,doc:1,wcc:1}},{n:'Locale vuotatoio di reparto',q:4,c:{vuc:1,lpa:1,lcl:1}},{n:'Ambulatorio',q:6,c:{lcl:1,wcc:1,lav:1}}],
+ sco:[{n:'Spogliatoio sportivo (10 docce)',q:2,c:{doc:10,lav:4,wcc:3,orv:2,lpi:2}},{n:'Servizi pubblico',q:2,c:{wcc:4,lav:4,orf:3}},{n:'Spogliatoio industriale (8 docce)',q:2,c:{doc:8,lav:6,wcc:3,orv:2}},{n:'Servizi aula scolastica',q:6,c:{wcc:3,lav:3,orv:2}}]
+};
+function loadExample(d){
+  const ms=d==='sco'?TMOD.sco.slice(0,2):TMOD[d];
+  S.tips=ms.map(m=>({id:uid('t'),name:m.n,qty:m.q,cAF:0,cAC:0,c:Object.assign({},m.c)}));
+  S.sel=S.tips[0].id;
+  const all=Object.fromEntries(S.tips.map(t=>[t.id,t.qty]));
+  const one=Object.fromEntries(S.tips.map((t,i)=>[t.id,i===0?1:0]));
+  const R=(name,svc,L,c,crit,mat)=>({id:uid('r'),name,svc,L,c:Object.assign({},c),mat:mat||'',size:'auto',crit:crit?1:0});
+  S.net.rows=[R('Allacciamento → centrale (AF+AC)','AFAC',10,all,1,'pe16'),R('Distribuzione principale AF','AF',30,all,1),R('Derivazione AF utenza più sfavorita','AF',10,one,1),R('Distribuzione principale AC','AC',30,all,1),R('Derivazione AC utenza più sfavorita','AC',10,one,1)];
+  const r=acsFromTips(); if(r.length) S.acs.rows=r;
+  renderAll(); save();
+}
+function acsFromTips(){
+  const d=S.cfg.dest, acc={}; const add=(k,q)=>{if(q>0)acc[k]=(acc[k]||0)+q;};
+  for(const t of S.tips){
+    const q=num(t.qty), c=k=>num(t.c[k]);
+    const wc=c('wcc')+c('wcp')+c('wcf'), baths=c('vas')+c('doc'), rub=c('lav')+c('lpi')+c('lca');
+    if(d==='res'){ if(baths>0) add(baths>=2?'res2':'res1',q); }
+    else if(d==='hot'){ if(c('vas')>0) add('hotV',q); else if(c('doc')>0&&c('doc')<=2) add('hotD',q); }
+    else if(d==='uff'){ add('uffP',wc*q); }
+    else if(d==='osp'){ if(baths>0) add('osp',q*2); }
+    else { const ind=/industr|stabilim|azienda/i.test(t.name); add(ind?'spoD':'palD',c('doc')*q); if(c('doc')>0) add(ind?'spoR':'palR',rub*q); }
+  }
+  return Object.entries(acc).map(([k,q])=>acsRow(k,q));
+}
 function scenario(k){
   if(k==='res') return [acsRow('res1',8),acsRow('res2',16)];
   if(k==='hot') return [acsRow('hotD',48),acsRow('hotV',12),acsRow('cucM',120),acsRow('lavHm',110)];
@@ -646,7 +687,18 @@ function qd(t,k,method,cont){const r=QF[method](t,k);const c=cont?(k===2?cont[0]
 // ---------------------------------------------------------------- render 1
 let showAll=false;
 function curTip(){return S.tips.find(t=>t.id===S.sel)||S.tips[0];}
+function updTipBtn(){const t=curTip();const b=document.querySelector(`.tipbtn[data-tip="${t.id}"]`);if(b)b.innerHTML=`${esc(t.name)} <span class="muted">× ${fmt(num(t.qty),0)}</span>`;}
+function renderTipModels(){
+  const d=S.cfg.dest; const DL={res:'Residenziale',uff:'Uffici',hot:'Alberghi',osp:'Ospedali, cliniche',sco:'Sport, scuole, industria'};
+  const ord=[d,...Object.keys(TMOD).filter(k=>k!==d)];
+  $('#tipModel').innerHTML=ord.map(k=>`<optgroup label="${DL[k]}">${TMOD[k].map((m,i)=>`<option value="${k}:${i}">${esc(m.n)}</option>`).join('')}</optgroup>`).join('');
+  const isRes=S.tips.every(t=>/^Alloggio/.test(t.name));
+  const h=$('#destHint');
+  if(d!=='res'&&isRes){h.hidden=false;h.innerHTML=`Le tipologie sono ancora quelle residenziali d'esempio. <button class="btn sm pri" type="button" id="loadDestEx">Sostituisci con l'esempio «${DL[d]}»</button> <span class="small muted">(sostituisce tipologie, rete e utenze ACS)</span>`;}
+  else h.hidden=true;
+}
 function renderTips(){
+  renderTipModels();
   $('#tipList').innerHTML=S.tips.map(t=>`<button type="button" class="tipbtn" data-tip="${t.id}" aria-pressed="${t.id===S.sel}">${esc(t.name)} <span class="muted">× ${fmt(num(t.qty),0)}</span></button>`).join('');
   const t=curTip(); if(!t) return;
   $('#tip-name').value=t.name; $('#tip-qty').value=t.qty; $('#tip-caf').value=t.cAF; $('#tip-cac').value=t.cAC;
@@ -1010,12 +1062,12 @@ function refresh(){renderUCOut();renderNetOut();renderAut();renderACSOut();rende
 document.addEventListener('input',e=>{
   const el=e.target;
   if(el.dataset.k){setK(el.dataset.k,el.type==='number'?(el.value===''&&el.dataset.k==='aut.pset'?'':num(el.value)):el.value);
-    if(['cfg.dest','cfg.ucTab'].includes(el.dataset.k)){renderAppTable();}
+    if(['cfg.dest','cfg.ucTab'].includes(el.dataset.k)){renderTips();}
     if(el.dataset.k==='net.mat'){renderNetTable();}
     refresh();return;}
   if(el.dataset.app){curTip().c[el.dataset.app]=num(el.value);updAppTot();refresh();return;}
-  if(el.id==='tip-name'){curTip().name=el.value;$(`.tipbtn[data-tip="${S.sel}"]`).firstChild.textContent=el.value+' ';refresh();return;}
-  if(el.id==='tip-qty'){curTip().qty=num(el.value);refresh();return;}
+  if(el.id==='tip-name'){curTip().name=el.value;updTipBtn();refresh();return;}
+  if(el.id==='tip-qty'){curTip().qty=num(el.value);updTipBtn();refresh();return;}
   if(el.id==='tip-caf'){curTip().cAF=num(el.value);refresh();return;}
   if(el.id==='tip-cac'){curTip().cAC=num(el.value);refresh();return;}
   const tr=el.closest('tr[data-row]');
@@ -1033,6 +1085,9 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
   if(b.classList.contains('tab')){showTab(b.dataset.tab);return;}
   if(b.dataset.tip){S.sel=b.dataset.tip;renderTips();renderUCOut();save();return;}
+  if(b.id==='tipFromModel'){const [d,i]=$('#tipModel').value.split(':');const m=TMOD[d][+i];const t={id:uid('t'),name:m.n,qty:m.q,cAF:0,cAC:0,c:Object.assign({},m.c)};S.tips.push(t);S.sel=t.id;renderTips();renderNetTable();refresh();return;}
+  if(b.id==='loadDestEx'){loadExample(S.cfg.dest);return;}
+  if(b.id==='acsFromTips'){const r=acsFromTips();if(r.length){S.acs.rows=r;renderACSTable();refresh();}return;}
   if(b.id==='tipAdd'){const t={id:uid('t'),name:'Nuova tipologia',qty:1,cAF:0,cAC:0,c:{}};S.tips.push(t);S.sel=t.id;renderTips();renderNetTable();refresh();return;}
   if(b.id==='tipDup'){const o=curTip();const t=JSON.parse(JSON.stringify(o));t.id=uid('t');t.name=o.name+' (copia)';S.tips.push(t);S.sel=t.id;renderTips();renderNetTable();refresh();return;}
   if(b.id==='tipDel'){if(S.tips.length<2)return;const id=S.sel;S.tips=S.tips.filter(t=>t.id!==id);S.net.rows.forEach(r=>delete r.c[id]);S.sel=S.tips[0].id;renderTips();renderNetTable();refresh();return;}
