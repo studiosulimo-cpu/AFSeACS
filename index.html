@@ -1,0 +1,1062 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dimensionamento Idrico-Sanitario</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: tavola tecnica — barra di testata con schede numerate per fase di calcolo, pannelli a griglia 12 colonne, tabelle dense con numeri tabulari. AF = blu, AC = rosso (convenzione impiantistica). */
+:root{
+  --bg:#f3f5f7; --panel:#ffffff; --ink:#18212b; --ink2:#4a5866; --line:#d5dce3; --line2:#e7ecf0;
+  --accent:#0f5f8a; --accent-ink:#ffffff; --af:#1f6fb2; --af-bg:#e6f0f9; --ac:#c2412d; --ac-bg:#fbebe7;
+  --ok:#2f7d4a; --ok-bg:#e5f3ea; --warn:#a86a00; --warn-bg:#fdf3dc; --bad:#b3261e; --bad-bg:#fbe7e5;
+  --chip:#eef2f5; --input:#ffffff; --focus:#0f5f8a55;
+  --f-display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10161c; --panel:#18212a; --ink:#e3e9ef; --ink2:#a2b0bd; --line:#2d3a46; --line2:#24303b;
+  --accent:#5fb0dc; --accent-ink:#0b1620; --af:#6fb2ea; --af-bg:#15283a; --ac:#f08a74; --ac-bg:#3a1f1a;
+  --ok:#6cc58b; --ok-bg:#16301f; --warn:#e7b04a; --warn-bg:#352a12; --bad:#f2847b; --bad-bg:#3b1c1a;
+  --chip:#222d37; --input:#121a21; --focus:#5fb0dc66; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10161c; --panel:#18212a; --ink:#e3e9ef; --ink2:#a2b0bd; --line:#2d3a46; --line2:#24303b;
+  --accent:#5fb0dc; --accent-ink:#0b1620; --af:#6fb2ea; --af-bg:#15283a; --ac:#f08a74; --ac-bg:#3a1f1a;
+  --ok:#6cc58b; --ok-bg:#16301f; --warn:#e7b04a; --warn-bg:#352a12; --bad:#f2847b; --bad-bg:#3b1c1a;
+  --chip:#222d37; --input:#121a21; --focus:#5fb0dc66; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--panel)}
+.wrap{max-width:1280px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding-block:12px 6px}
+.brand h1{font-family:var(--f-display);font-weight:700;font-size:1.45rem;margin:0;letter-spacing:.01em;text-wrap:balance}
+.brand .sub{color:var(--ink2);font-size:.85rem}
+.brand .sp{flex:1}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:thin}
+.tab{appearance:none;border:0;background:none;color:var(--ink2);font-family:var(--f-display);font-weight:600;font-size:1rem;padding:9px 12px 10px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.tab .n{font-family:var(--f-mono);font-size:.75rem;color:var(--ink2);margin-right:6px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+main{padding-block:18px 48px}
+section.view{display:grid;gap:16px}
+section.view[hidden],[hidden]{display:none!important}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(12,minmax(0,1fr))}
+.c12{grid-column:span 12}.c8{grid-column:span 8}.c7{grid-column:span 7}.c6{grid-column:span 6}.c5{grid-column:span 5}.c4{grid-column:span 4}
+@media (max-width:980px){.c8,.c7,.c6,.c5,.c4{grid-column:span 12}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;min-width:0}
+.panel h2{font-family:var(--f-display);font-size:1.15rem;font-weight:700;margin:0 0 4px;text-wrap:balance}
+.panel h3{font-family:var(--f-display);font-size:1rem;font-weight:600;margin:14px 0 6px;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em}
+.lead{color:var(--ink2);margin:0 0 12px;max-width:80ch;font-size:.92rem}
+.fields{display:grid;gap:10px 14px;grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.f{display:flex;flex-direction:column;gap:3px;min-width:0}
+.f label{font-size:.78rem;color:var(--ink2);font-weight:600;letter-spacing:.02em}
+.f small{font-size:.74rem;color:var(--ink2)}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--input);border:1px solid var(--line);border-radius:4px;padding:6px 8px;min-width:0;width:100%}
+input[type=number]{font-family:var(--f-mono);font-size:.9rem;text-align:right}
+input[type=checkbox]{width:auto;accent-color:var(--accent)}
+textarea{font-family:var(--f-mono);font-size:.8rem;min-height:90px}
+button.btn{font:inherit;font-weight:600;font-size:.88rem;border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:4px;padding:6px 11px;cursor:pointer}
+button.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.btn.ghost{background:none}
+button.btn.sm{padding:3px 8px;font-size:.8rem}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tw{overflow-x:auto;border:1px solid var(--line2);border-radius:4px}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th,td{padding:5px 8px;border-bottom:1px solid var(--line2);text-align:left;vertical-align:middle}
+th{font-family:var(--f-display);font-weight:600;font-size:.82rem;color:var(--ink2);background:var(--chip);letter-spacing:.02em;white-space:nowrap}
+td.n,th.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.tot td{font-weight:700;background:var(--chip)}
+td input[type=number]{width:72px;padding:3px 6px}
+td input.w-s{width:56px}
+td input.w-l{width:100%;min-width:160px;text-align:left;font-family:var(--f-body)}
+td select{padding:3px 6px;width:auto;max-width:170px}
+.af{color:var(--af)}.ac{color:var(--ac)}
+th.af,td.afb{background:var(--af-bg)} th.ac,td.acb{background:var(--ac-bg)}
+.pill{display:inline-block;font-size:.72rem;font-weight:700;padding:1px 7px;border-radius:99px;letter-spacing:.03em;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.pill.af{background:var(--af-bg);color:var(--af)}.pill.ac{background:var(--ac-bg);color:var(--ac)}.pill.mix{background:var(--chip);color:var(--ink)}
+.kpis{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+.kpi{border:1px solid var(--line2);border-radius:5px;padding:9px 11px;background:var(--panel);min-width:0}
+.kpi .l{font-size:.74rem;color:var(--ink2);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.kpi .v{font-family:var(--f-mono);font-size:1.25rem;font-weight:500;font-variant-numeric:tabular-nums;margin-top:2px}
+.kpi .u{font-size:.8rem;color:var(--ink2);margin-left:3px}
+.kpi.af{border-left:3px solid var(--af)}.kpi.ac{border-left:3px solid var(--ac)}.kpi.hl{border-left:3px solid var(--accent)}
+.msg{border-radius:4px;padding:8px 11px;font-size:.86rem;margin:6px 0}
+.msg.warn{background:var(--warn-bg);color:var(--ink)}.msg.bad{background:var(--bad-bg);color:var(--ink)}.msg.ok{background:var(--ok-bg);color:var(--ink)}.msg.info{background:var(--chip)}
+.msg b{font-weight:700}
+.tips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tipbtn{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:4px;padding:5px 10px;font:inherit;font-size:.86rem;cursor:pointer}
+.tipbtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.cert{font-family:var(--f-mono);font-size:.7rem;padding:0 5px;border-radius:3px;border:1px solid var(--line);color:var(--ink2);white-space:nowrap}
+.formula{font-family:var(--f-mono);font-size:.84rem;background:var(--chip);border-radius:4px;padding:6px 10px;overflow-x:auto;white-space:nowrap}
+.notes p,.notes li{max-width:90ch}
+.notes li{margin-bottom:5px}
+.muted{color:var(--ink2)}
+.small{font-size:.8rem}
+svg text{fill:var(--ink2);font-family:var(--f-mono);font-size:11px}
+.gridline{stroke:var(--line2)} .axis{stroke:var(--line)}
+.crv{fill:none;stroke:var(--accent);stroke-width:2}
+.dot{fill:var(--ac);stroke:var(--panel);stroke-width:2}
+.hide-embed[hidden]{display:none!important}
+@media print{header.top{position:static}.tabs,.noprint{display:none!important}section.view#v-rep{display:grid!important}section.view:not(#v-rep){display:none!important}body{background:#fff}.panel{break-inside:avoid}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <h1>Dimensionamento Idrico-Sanitario</h1>
+      <span class="sub">Unità di carico UNI 9182 · prEN 806 · EN 806-3 — rete di adduzione, sopraelevazione, accumulo ACS</span>
+      <span class="sp"></span>
+      <button class="btn sm ghost noprint" id="btnReset" type="button">Ripristina esempio</button>
+    </div>
+    <nav class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-tab="uc" aria-selected="true"><span class="n">1</span>Apparecchi e unità di carico</button>
+      <button class="tab" role="tab" data-tab="net"><span class="n">2</span>Rete di distribuzione</button>
+      <button class="tab" role="tab" data-tab="aut"><span class="n">3</span>Sopraelevazione</button>
+      <button class="tab" role="tab" data-tab="acs"><span class="n">4</span>Accumulo ACS</button>
+      <button class="tab" role="tab" data-tab="rep"><span class="n">5</span>Riepilogo</button>
+      <button class="tab" role="tab" data-tab="doc"><span class="n">i</span>Metodo e fonti</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- ============ 1. UC ============ -->
+  <section class="view" id="v-uc">
+    <div class="panel">
+      <h2>Impostazioni generali</h2>
+      <p class="lead">La destinazione d'uso sceglie la tabella delle unità di carico UNI 9182 (abitazioni private o edifici collettivi), la curva di contemporaneità e la tabella prEN 806. Il metodo di progetto è quello usato per dimensionare la rete (scheda 2); in questa scheda i tre metodi vengono sempre confrontati.</p>
+      <div class="fields">
+        <div class="f"><label for="cfg-dest">Destinazione d'uso</label>
+          <select id="cfg-dest" data-k="cfg.dest">
+            <option value="res">Residenziale</option>
+            <option value="uff">Uffici e simili</option>
+            <option value="hot">Alberghi, pensioni</option>
+            <option value="osp">Ospedali, cliniche</option>
+            <option value="sco">Scuole, impianti sportivi, spogliatoi industriali</option>
+          </select></div>
+        <div class="f"><label for="cfg-uctab">Tabella UC (UNI 9182)</label>
+          <select id="cfg-uctab" data-k="cfg.ucTab">
+            <option value="auto">Automatica da destinazione</option>
+            <option value="priv">Abitazioni private</option>
+            <option value="pub">Edifici pubblici e collettivi</option>
+          </select></div>
+        <div class="f"><label for="cfg-unicurve">Curva UC → portata (UNI)</label>
+          <select id="cfg-unicurve" data-k="cfg.uniCurve">
+            <option value="auto">Automatica da destinazione</option>
+            <option value="res">Residenziale – edifici collettivi</option>
+            <option value="uff">Uffici e similari</option>
+          </select></div>
+        <div class="f"><label for="cfg-method">Metodo di progetto rete</label>
+          <select id="cfg-method" data-k="cfg.method">
+            <option value="uni">UNI 9182 – unità di carico</option>
+            <option value="pren">prEN 806 – portate totali (Caleffi)</option>
+            <option value="en">EN 806-3 – loading units (approssimato)</option>
+          </select></div>
+        <div class="f"><label for="cfg-taf">Temperatura AF [°C]</label><input type="number" id="cfg-taf" data-k="cfg.tAF" step="1"></div>
+        <div class="f"><label for="cfg-tac">Temperatura AC in rete [°C]</label><input type="number" id="cfg-tac" data-k="cfg.tAC" step="1"></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel c7">
+        <h2>Tipologie di utenza</h2>
+        <p class="lead">Ogni tipologia è un gruppo di apparecchi che si ripete (alloggio, bagno camera, blocco spogliatoio). Le tipologie sono poi assegnate ai tratti della rete.</p>
+        <div class="tips" id="tipList"></div>
+        <div class="fields" style="margin-bottom:10px">
+          <div class="f" style="grid-column:span 2"><label for="tip-name">Nome tipologia</label><input id="tip-name" type="text"></div>
+          <div class="f"><label for="tip-qty">N° nell'edificio</label><input id="tip-qty" type="number" min="0" step="1"></div>
+          <div class="f"><label for="tip-caf">Portata continua AF [l/s]</label><input id="tip-caf" type="number" min="0" step="0.01"><small>processo, non contemporaneizzata</small></div>
+          <div class="f"><label for="tip-cac">Portata continua AC [l/s]</label><input id="tip-cac" type="number" min="0" step="0.01"></div>
+        </div>
+        <div class="row" style="margin-bottom:10px">
+          <button class="btn sm" id="tipAdd" type="button">+ Nuova tipologia</button>
+          <button class="btn sm" id="tipDup" type="button">Duplica</button>
+          <button class="btn sm ghost" id="tipDel" type="button">Elimina</button>
+          <label class="small muted row" style="gap:5px"><input type="checkbox" id="showAll"> mostra tutti gli apparecchi</label>
+        </div>
+        <div class="tw"><table id="appTable"></table></div>
+      </div>
+      <div class="c5" style="display:grid;gap:16px;align-content:start">
+        <div class="panel">
+          <h2>Tipologia selezionata</h2>
+          <p class="lead" id="tipSumLead"></p>
+          <div class="tw"><table id="tipCompare"></table></div>
+          <p class="small muted" style="margin:8px 0 0">Portate di progetto in l/s. «Tot» = alimentazione comune AF+AC (contatore, tratto a monte della produzione ACS).</p>
+        </div>
+        <div class="panel">
+          <h2>Totale edificio</h2>
+          <p class="lead" id="bldLead"></p>
+          <div class="tw"><table id="bldCompare"></table></div>
+          <div id="bldMsg"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2. RETE ============ -->
+  <section class="view" id="v-net" hidden>
+    <div class="grid">
+      <div class="panel c7">
+        <h2>Pressioni e carico unitario disponibile</h2>
+        <p class="lead">Metodo del carico unitario lineare (Quaderno Caleffi, formula 1): J = (P<sub>pr</sub> − Δh − P<sub>min</sub> − H<sub>app</sub>) · F · 1000 / L, con L lunghezza del percorso più sfavorito (tratti spuntati come «critico»).</p>
+        <div class="fields">
+          <div class="f"><label for="n-ppr">P<sub>pr</sub> pressione di progetto [m c.a.]</label><input type="number" id="n-ppr" data-k="net.Ppr" step="1"><small>minima garantita all'origine</small></div>
+          <div class="f"><label for="n-dh">Δh dislivello [m]</label><input type="number" id="n-dh" data-k="net.dh" step="0.5"><small>origine → apparecchio più sfavorito</small></div>
+          <div class="f"><label for="n-pmin">P<sub>min</sub> all'apparecchio [m c.a.]</label><input type="number" id="n-pmin" data-k="net.pmin" step="0.5"><small>EN 806-3: 100 kPa ≈ 10,2 m</small></div>
+          <div class="f"><label for="n-F">F fattore perdite localizzate</label><input type="number" id="n-F" data-k="net.F" step="0.05"><small>Caleffi: 0,7</small></div>
+          <div class="f"><label for="n-mode">Criterio di scelta diametri</label>
+            <select id="n-mode" data-k="net.mode"><option value="J">Carico unitario J + velocità max</option><option value="V">Solo velocità max</option></select></div>
+          <div class="f"><label for="n-imp">Tipo impianto (velocità)</label>
+            <select id="n-imp" data-k="cfg.imp"><option value="A">A – residenziale, uffici, alberghi, ospedali, scuole</option><option value="B">B – industriale, artigianale, palestre</option></select></div>
+          <div class="f"><label for="n-vcap">Limite velocità EN 806-3 [m/s]</label><input type="number" id="n-vcap" data-k="cfg.vcap" step="0.1"><small>0 = nessun tetto oltre Tab. 9</small></div>
+          <div class="f"><label for="n-mat">Materiale di default</label><select id="n-mat" data-k="net.mat"></select></div>
+        </div>
+      </div>
+      <div class="panel c5">
+        <h2>Perdite dei componenti H<sub>app</sub></h2>
+        <p class="lead">Valori medi Caleffi Tab. 8 [m c.a.]; per il progetto esecutivo usare i dati del produttore alla portata di progetto.</p>
+        <div class="tw"><table id="happTable"></table></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="kpis" id="netKpi"></div>
+      <div id="netMsg"></div>
+    </div>
+    <div class="panel">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <div><h2>Tratti di rete</h2><p class="lead" style="margin:0">Per ogni tratto indica quante tipologie alimenta, il servizio e se appartiene al percorso più sfavorito. I diametri «auto» sono il minimo che rispetta J e velocità.</p></div>
+        <div class="row"><button class="btn sm" id="rowAdd" type="button">+ Tratto</button></div>
+      </div>
+      <div class="tw"><table id="netTable"></table></div>
+      <p class="small muted">Perdite: formule Caleffi per tubi a bassa rugosità (rame, inox, plastica, multistrato) r = 14,68·ν<sup>0,25</sup>·ρ·G<sup>1,75</sup>/D<sup>4,75</sup> e media rugosità (acciaio zincato) r = 3,3·ν<sup>0,13</sup>·ρ·G<sup>1,87</sup>/D<sup>5,01</sup> [mm c.a./m; G l/h; D mm]. ΔP tratto = r·L/F.</p>
+    </div>
+  </section>
+
+  <!-- ============ 3. AUTOCLAVE ============ -->
+  <section class="view" id="v-aut" hidden>
+    <div class="grid">
+      <div class="panel c6">
+        <h2>Dati del gruppo di sopraelevazione</h2>
+        <p class="lead">Formule Quaderno Caleffi (cap. Sistemi di sopraelevazione). Pressioni in m c.a. relative; il +10 nelle formule le rende assolute.</p>
+        <div class="fields">
+          <div class="f"><label for="a-g">G<sub>pr</sub> portata di progetto [l/s]</label><input type="number" id="a-g" data-k="aut.G" step="0.05"><button class="btn sm" type="button" id="aFromNet" style="margin-top:4px">Prendi da rete</button></div>
+          <div class="f"><label for="a-pmin">P<sub>min</sub> sopraelevazione [m c.a.]</label><input type="number" id="a-pmin" data-k="aut.pmin" step="1"><button class="btn sm" type="button" id="aPminNet" style="margin-top:4px">Calcola da rete</button></div>
+          <div class="f"><label for="a-dp">P<sub>max</sub> − P<sub>min</sub> [m c.a.]</label><input type="number" id="a-dp" data-k="aut.dp" step="1"><small>tipico 10÷15</small></div>
+          <div class="f"><label for="a-pacq">Pressione acquedotto [m c.a.]</label><input type="number" id="a-pacq" data-k="aut.pacq" step="1"></div>
+          <div class="f"><label for="a-l1">Perdita contatore [m c.a.]</label><input type="number" id="a-l1" data-k="aut.l1" step="0.5"></div>
+          <div class="f"><label for="a-l2">Perdita disconnettore [m c.a.]</label><input type="number" id="a-l2" data-k="aut.l2" step="0.5"></div>
+          <div class="f"><label for="a-l3">Perdite tratto a monte [m c.a.]</label><input type="number" id="a-l3" data-k="aut.l3" step="0.5"></div>
+          <div class="f"><label for="a-np">Pompe in servizio contemporaneo</label><input type="number" id="a-np" data-k="aut.np" step="1" min="1"></div>
+          <div class="f"><label for="a-eta">Rendimento pompa η</label><input type="number" id="a-eta" data-k="aut.eta" step="0.05"></div>
+          <div class="f"><label for="a-amode">Avviamenti orari a</label><select id="a-amode" data-k="aut.amode"><option value="auto">Automatico da potenza</option><option value="man">Manuale</option></select></div>
+          <div class="f"><label for="a-a">a manuale [h⁻¹]</label><input type="number" id="a-a" data-k="aut.a" step="1"></div>
+          <div class="f"><label for="a-pset">P set inverter [m c.a.]</label><input type="number" id="a-pset" data-k="aut.pset" step="1"><small>vuoto = P<sub>max</sub></small></div>
+        </div>
+      </div>
+      <div class="panel c6">
+        <h2>Risultati</h2>
+        <div class="kpis" id="autKpi"></div>
+        <h3>Volumi del serbatoio e taglia commerciale</h3>
+        <div class="fields" style="margin-bottom:8px">
+          <div class="f"><label for="a-cat">Autoclave a cuscino d'aria</label><select id="a-cat" data-k="aut.cat"><option value="Z">Zincata Z PED VT</option><option value="X">Inox 316L X PED VT</option></select></div>
+          <div class="f"><label for="a-tol">Tolleranza arrotondamento [%]</label><input type="number" id="a-tol" data-k="cfg.tol" step="1" min="0"><small>scarto ammesso sotto il calcolo</small></div>
+        </div>
+        <div class="tw"><table id="autTable"></table></div>
+        <div id="autMsg"></div>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="panel c6">
+        <h2>Riserva idrica / preautoclave</h2>
+        <p class="lead">Serbatoio a pressione atmosferica a monte delle pompe (catalogo Cordivari Recupero acque e serbatoi). Volume = max(consumo giornaliero × autonomia/24; G<sub>pr</sub> × durata di punta da coprire).</p>
+        <div class="fields">
+          <div class="f"><label for="r-ab">Utenti equivalenti</label><input type="number" id="r-ab" data-k="aut.rab" step="1" min="0"></div>
+          <div class="f"><label for="r-dot">Dotazione [l/utente·g]</label><input type="number" id="r-dot" data-k="aut.rdot" step="10"></div>
+          <div class="f"><label for="r-h">Autonomia [h]</label><input type="number" id="r-h" data-k="aut.rh" step="1"></div>
+          <div class="f"><label for="r-min">Punta da coprire [min]</label><input type="number" id="r-min" data-k="aut.rmin" step="1"><small>a G<sub>pr</sub> senza reintegro</small></div>
+          <div class="f"><label for="r-fam">Serbatoio</label><select id="r-fam" data-k="aut.rfam"><option value="zn">Zincato verticale</option><option value="ix">Inox 304 verticale</option><option value="pe">Polietilene verticale</option></select></div>
+        </div>
+      </div>
+      <div class="panel c6">
+        <h2>Taglia riserva</h2>
+        <div class="kpis" id="risKpi"></div>
+        <div id="risOut" class="small" style="margin-top:8px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4. ACS ============ -->
+  <section class="view" id="v-acs" hidden>
+    <div class="grid">
+      <div class="panel c5">
+        <h2>Temperature e scambiatore</h2>
+        <p class="lead">Metodo del periodo di punta (Caleffi; stessa impostazione dell'appendice UNI 9182 sui preparatori). Per pompa di calore abbassa t<sub>a</sub> e la temperatura di mandata: il volume cresce di conseguenza.</p>
+        <div class="fields">
+          <div class="f"><label for="h-tf">t<sub>f</sub> acqua fredda [°C]</label><input type="number" id="h-tf" data-k="acs.tf" step="1"><small>Nord 10÷12 · Centro 12÷15 · Sud 15÷18</small></div>
+          <div class="f"><label for="h-ta">t<sub>a</sub> accumulo [°C]</label><input type="number" id="h-ta" data-k="acs.ta" step="1"><small>60 °C consigliato (legionella)</small></div>
+          <div class="f"><label for="h-tm">Mandata fluido scaldante [°C]</label><input type="number" id="h-tm" data-k="acs.tmand" step="1"></div>
+          <div class="f"><label for="h-dt">Δt fluido scaldante [K]</label><input type="number" id="h-dt" data-k="acs.dt" step="1"></div>
+          <div class="f"><label for="h-k">k serpentino [kcal/h m² °C]</label><select id="h-k" data-k="acs.k"><option value="500">500 – acciaio</option><option value="520">520 – rame</option></select></div>
+          <div class="f"><label for="h-fu">Volume utile [%]</label><input type="number" id="h-fu" data-k="acs.fu" step="5"><small>100 = volume teorico Caleffi</small></div>
+        </div>
+        <h3>Scenari di esempio</h3>
+        <div class="row">
+          <button class="btn sm" type="button" data-scn="res">Condominio 8 + 16 alloggi</button>
+          <button class="btn sm" type="button" data-scn="hot">Albergo 60 camere</button>
+          <button class="btn sm" type="button" data-scn="spo">Centro sportivo</button>
+          <button class="btn sm" type="button" data-scn="ind">Stabilimento a turni</button>
+        </div>
+      </div>
+      <div class="panel c7">
+        <h2>Risultato accumulo</h2>
+        <div class="kpis" id="acsKpi"></div>
+        <div id="acsMsg"></div>
+        <h3>Taglia commerciale (catalogo Cordivari 2026)</h3>
+        <div class="fields" style="margin-bottom:8px">
+          <div class="f"><label for="h-fam">Famiglia bollitore</label><select id="h-fam" data-k="acs.fam"><option value="auto">Automatica</option><option value="st">BOLLY 1 ST FB – caldaia</option><option value="xl">BOLLY 1 XL – pompa di calore</option><option value="ex">EXTRA 1 WX – grandi volumi</option></select></div>
+          <div class="f"><label for="h-chk">Verifica superficie serpentino</label><select id="h-chk" data-k="acs.chkS"><option value="1">Sì</option><option value="0">No</option></select></div>
+          <div class="f"><label for="h-maxn">Bollitori max in batteria</label><input type="number" id="h-maxn" data-k="acs.maxn" step="1" min="1"></div>
+        </div>
+        <div id="acsSizes" class="small"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <div><h2>Utenze ACS</h2><p class="lead" style="margin:0">Consumi nel periodo di punta da Quaderno Caleffi. Le righe con periodi diversi sono calcolate separatamente e sommate (punte assunte contemporanee: scelta conservativa).</p></div>
+        <div class="row"><select id="acsPreset" aria-label="Utenza da aggiungere"></select><button class="btn sm" id="acsAdd" type="button">+ Aggiungi</button></div>
+      </div>
+      <div class="tw"><table id="acsTable"></table></div>
+    </div>
+    <div class="grid">
+      <div class="panel c7">
+        <h2>Curva volume – potenza</h2>
+        <p class="lead">Stesse utenze, preriscaldamento variabile da 0,5 a 8 h: meno potenza richiede più accumulo. Il punto rosso è la configurazione attuale.</p>
+        <div id="acsChart"></div>
+      </div>
+      <div class="panel c5">
+        <h2>Produzione istantanea</h2>
+        <p class="lead">Per confronto: potenza dello scambiatore istantaneo Q = G<sub>pr</sub> · 3600 · (t<sub>u</sub> − t<sub>f</sub>), con G<sub>pr</sub> portata di progetto AC.</p>
+        <div class="fields">
+          <div class="f"><label for="i-g">G<sub>pr</sub> AC [l/s]</label><input type="number" id="i-g" data-k="acs.Gi" step="0.05"><button class="btn sm" id="iFromNet" type="button" style="margin-top:4px">Prendi da rete</button></div>
+          <div class="f"><label for="i-tu">t<sub>u</sub> utilizzo [°C]</label><input type="number" id="i-tu" data-k="acs.tui" step="1"></div>
+        </div>
+        <div class="kpis" id="instKpi" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5. RIEPILOGO ============ -->
+  <section class="view" id="v-rep" hidden>
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <h2>Riepilogo di calcolo</h2>
+        <div class="row noprint"><button class="btn sm" id="btnPrint" type="button" hidden>Stampa</button></div>
+      </div>
+      <div class="fields" style="margin:8px 0 12px">
+        <div class="f" style="grid-column:span 2"><label for="r-prj">Progetto / commessa</label><input type="text" id="r-prj" data-k="rep.prj"></div>
+        <div class="f"><label for="r-aut">Redatto da</label><input type="text" id="r-aut" data-k="rep.aut"></div>
+      </div>
+      <div id="repBody"></div>
+    </div>
+    <div class="panel noprint">
+      <h2>Salva e carica progetto</h2>
+      <p class="lead">Il progetto resta salvato in questo browser. Per archiviarlo o passarlo a un collega copia il testo JSON; per riaprirlo incollalo e premi «Carica».</p>
+      <div class="row" style="margin-bottom:8px"><button class="btn sm" id="jsonOut" type="button">Genera JSON</button><button class="btn sm" id="jsonCopy" type="button">Copia</button><button class="btn sm pri" id="jsonIn" type="button">Carica dal testo</button><span id="jsonMsg" class="small muted"></span></div>
+      <textarea id="jsonBox" spellcheck="false" aria-label="Progetto in formato JSON"></textarea>
+    </div>
+  </section>
+
+  <!-- ============ DOC ============ -->
+  <section class="view notes" id="v-doc" hidden>
+    <div class="panel">
+      <h2>Metodo, fonti e grado di certezza</h2>
+      <p class="lead">Ogni scelta è marcata: <span class="cert">certo</span> riprodotto da fonte; <span class="cert">probabile</span> interpretazione coerente con la fonte; <span class="cert">ipotesi</span> approssimazione da verificare sul testo normativo.</p>
+      <h3>Unità di carico e portate di progetto</h3>
+      <ul>
+        <li><b>UNI 9182 – unità di carico</b>: valori UC per apparecchio (abitazioni private / edifici collettivi) e curve UC → portata (residenziale e uffici, vaso a cassetta o flussometro) presi dal foglio di calcolo di partenza <span class="cert">certo</span>. Interpolazione lineare tra i punti tabellati; sotto il primo punto portata proporzionale, mai inferiore alla portata nominale dell'apparecchio più grande né superiore alla somma delle portate nominali <span class="cert">ipotesi</span>. La curva a flussometro si attiva se nel tratto c'è almeno un vaso/orinatoio/vuotatoio a passo rapido o flussometro.</li>
+        <li><b>prEN 806 – portate totali</b>: Tab. 3–7 del Quaderno Caleffi «Impianti idrosanitari» (residenziale, uffici, alberghi, ospedali, scuole e centri sportivi) <span class="cert">certo</span>. G<sub>ta</sub> = somma portate nominali &lt; 0,5 l/s, G<sub>tb</sub> = somma portate ≥ 0,5 l/s. Con entrambe presenti le portate di progetto delle due curve sono sommate <span class="cert">probabile</span> (prassi DIN 1988-3, da cui il prEN deriva). La Tab. 3 coincide con G<sub>pr</sub> = 0,682·G<sub>ta</sub><sup>0,45</sup> − 0,14.</li>
+        <li><b>EN 806-3:2006 – loading units</b>: valori LU per apparecchio (prospetto 2, 1 LU = 0,1 l/s) <span class="cert">certo</span>. La conversione LU → Q<sub>D</sub> della figura B.1 non è disponibile in forma numerica: è approssimata con Q = 0,149·LU<sup>0,426</sup> (tarata su output di software commerciale: 5→0,296; 10→0,398; 36→0,687 l/s) e, per LU singolo massimo &gt; 2, con una retta log-log da (LU<sub>max</sub>; 0,1·LU<sub>max</sub>) che confluisce nella curva base a 300 LU <span class="cert">ipotesi</span>. Usare il metodo EN per confronto, non per il progetto, finché non è verificato sul prospetto originale.</li>
+        <li>Portate continue (processi industriali, lavaggi, reintegri) si sommano dopo la contemporaneità <span class="cert">probabile</span>; EN 806-3 esclude dal metodo semplificato gli usi continui oltre 15 min.</li>
+      </ul>
+      <h3>Rete</h3>
+      <ul>
+        <li>J disponibile = (P<sub>pr</sub> − Δh − P<sub>min</sub> − H<sub>app</sub>)·F·1000/L, F = 0,7; J &lt; 20÷25 mm/m → valutare sopraelevazione; J &gt; 110÷120 mm/m → valutare riduttore <span class="cert">certo</span> (Caleffi).</li>
+        <li>Velocità massime Tab. 9 Caleffi per acciaio zincato, PEAD e multistrato <span class="cert">certo</span>; rame, inox, PE-X e PP-R associati alla riga PEAD di pari diametro esterno <span class="cert">ipotesi</span>. Tetto opzionale 2,0 m/s di EN 806-3 per collettori e colonne <span class="cert">certo</span>.</li>
+        <li>Perdite continue: formule monomie Caleffi, verificate contro Tab. 10 e 12 entro ±3 % <span class="cert">certo</span>. ν(T) e ρ(T) calcolate con correlazioni standard.</li>
+        <li>Pressione statica massima ai rubinetti 50 m c.a. (Caleffi) / 500 kPa (EN 806-2) <span class="cert">certo</span>.</li>
+      </ul>
+      <h3>Sopraelevazione</h3>
+      <ul>
+        <li>Cuscino d'aria V = 30·G·60/a·(P<sub>max</sub>+10)/(P<sub>max</sub>−P<sub>min</sub>); membrana V = 6·G·60/a·(…); velocità variabile V = 0,2·G·(P+60); a = 30/25/20/15/10 per potenze &lt;3 / 3÷5 / 5÷7 / 7÷10 / &gt;10 kW <span class="cert">certo</span>. Nell'esempio Caleffi del caso 3 il testo riporta (60+70): il risultato 70 l corrisponde a (60+60).</li>
+      </ul>
+      <h3>Accumulo ACS</h3>
+      <ul>
+        <li>Q<sub>t</sub> = C·(t<sub>u</sub>−t<sub>f</sub>); Q<sub>h</sub> = Q<sub>t</sub>/(t<sub>pr</sub>+t<sub>pu</sub>); V = Q<sub>h</sub>·t<sub>pr</sub>/(t<sub>a</sub>−t<sub>f</sub>); S = Q<sub>h</sub>/[k·(t<sub>m1</sub>−t<sub>m2</sub>)] <span class="cert">certo</span>. Le tabelle rapide Caleffi (Tab. 3–12) sono riprodotte esattamente dalla formula con t<sub>f</sub> = 10 °C e t<sub>a</sub> = 60 °C.</li>
+        <li>Consumi di punta, periodi e contemporaneità residenziale (Tab. 2) da Quaderno Caleffi <span class="cert">certo</span>. Somma di utenze con periodi diversi a punte contemporanee <span class="cert">probabile</span>, lato sicurezza.</li>
+        <li>Linee guida legionellosi 2015: accumulo ≥ 60 °C, distribuzione ≥ 50 °C, ricircolo fino ai punti d'uso <span class="cert">probabile</span> – verificare sul testo vigente.</li>
+      </ul>
+      <h3>Taglie commerciali</h3>
+      <ul>
+        <li>Bollitori: catalogo Cordivari Bollitori e Termoaccumulatori 2026 – BOLLY® 1 ST FB, BOLLY® 1 XL, EXTRA 1 WX (volumi lordi e superfici dei serpentini) <span class="cert">certo</span>. Scelta: minimo numero di bollitori uguali, poi minimo volume, con superficie totale ≥ superficie calcolata con k Caleffi <span class="cert">probabile</span>: le superfici Cordivari vanno confermate con le loro tabelle di potenza.</li>
+        <li>Autoclavi a cuscino d'aria Z PED VT (8 e 11,76/12 bar) e X PED VT inox (8 bar); vasi a membrana V/Z PED 24÷500 l, 10 bar <span class="cert">certo</span>. Serie scelta con PS ≥ 1,1 × P<sub>max</sub> per lasciare margine alla taratura della valvola di sicurezza <span class="cert">ipotesi</span>.</li>
+        <li>Riserva idrica: catalogo Cordivari Recupero acque e serbatoi 2027 (zincati e inox 304 verticali, polietilene VT) <span class="cert">certo</span>; criterio di volume (autonomia e punta) <span class="cert">ipotesi</span>, da allineare al regolamento del gestore idrico.</li>
+        <li>Tolleranza di arrotondamento (default 5 %): si accetta una taglia appena sotto il calcolo, come si fa in pratica; impostala a 0 per arrotondare sempre per eccesso.</li>
+      </ul>
+      <h3>Correzioni rispetto al foglio Excel di partenza</h3>
+      <ul>
+        <li>Curve UNI a flussometro (residenziale e uffici): il punto 2.500 UC era scritto 250, rompendo l'ordinamento richiesto dal CERCA.VERT approssimato.</li>
+        <li>Residenziale: la portata era calcolata come ΣUC/10 (nessuna contemporaneità) poi moltiplicata per un fattore f arbitrario; qui la contemporaneità è quella delle curve.</li>
+        <li>Edifici pubblici: orinatoio a passo rapido con UC AF = 0 (corretto a 10); il lavello in elenco puntava alla riga del lavapadelle; i flag di selezione cassetta/flussometro erano letti da righe non pertinenti.</li>
+        <li>Foglio pr806-3: alcune celle AC moltiplicavano celle vuote; tubi in acciaio con il DN al posto del diametro interno; PP indicato PN16 ma con diametri della serie PN20.</li>
+        <li>Autoclave: formula corretta (cuscino d'aria in bar con a = 30), ma il ×1,5 in una delle celle non ha riscontro in Caleffi.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<script>
+const UNI={"resCas":[[6.0,0.3],[8.0,0.4],[10.0,0.5],[12.0,0.6],[14.0,0.68],[16.0,0.78],[18.0,0.85],[20.0,0.93],[25.0,1.13],[30.0,1.3],[35.0,1.46],[40.0,1.62],[50.0,1.9],[60.0,2.2],[70.0,2.4],[80.0,2.65],[90.0,2.9],[100.0,3.15],[120.0,3.65],[140.0,3.9],[160.0,4.25],[180.0,4.6],[200.0,4.95],[225.0,5.35],[250.0,5.75],[275.0,6.1],[300.0,6.45],[400.0,7.8],[500.0,9.0],[600.0,10.0],[700.0,11.0],[800.0,11.9],[900.0,12.9],[1000.0,13.8],[1250.0,15.5],[1500.0,17.5],[1750.0,18.8],[2000.0,20.5],[2250.0,22.0],[2500.0,23.5],[2750.0,24.5],[3000.0,26.0],[3500.0,28.0],[4000.0,30.5],[4500.0,32.5],[5000.0,34.5],[6000.0,38.0],[7000.0,41.0],[8000.0,44.0],[9000.0,47.0],[10000.0,50.0]],"resFlux":[[10.0,1.7],[12.0,1.9],[14.0,2.1],[16.0,2.27],[18.0,2.45],[20.0,2.6],[25.0,2.95],[30.0,3.25],[35.0,3.55],[40.0,3.8],[50.0,4.3],[60.0,4.8],[70.0,5.25],[80.0,5.6],[90.0,6.0],[100.0,6.35],[120.0,7.15],[140.0,7.5],[160.0,8.0],[180.0,8.5],[200.0,9.0],[225.0,9.5],[250.0,10.0],[275.0,10.5],[300.0,11.0],[400.0,12.7],[500.0,14.0],[600.0,15.1],[700.0,16.3],[800.0,17.3],[900.0,18.2],[1000.0,19.0],[1250.0,21.0],[1500.0,23.0],[1750.0,24.5],[2000.0,26.0],[2250.0,27.5],[2500,28.5],[2750.0,29.5],[3000.0,30.5],[3500.0,33.0],[4000.0,35.0],[4500.0,36.5],[5000.0,37.5],[6000.0,40.5],[7000.0,44.0],[8000.0,46.0],[9000.0,48.0],[10000.0,50.0]],"uffCas":[[6.0,0.3],[8.0,0.4],[10.0,0.5],[12.0,0.6],[14.0,0.67],[16.0,0.75],[18.0,0.82],[20.0,0.89],[25.0,1.05],[30.0,1.18],[35.0,1.35],[40.0,1.45],[50.0,1.65],[60.0,1.9],[70.0,2.1],[80.0,2.25],[90.0,2.45],[100.0,2.6],[120.0,2.9],[140.0,3.2],[160.0,3.5],[180.0,3.75],[200.0,3.95],[225.0,4.25],[250.0,4.5],[275.0,4.8],[300.0,5.05],[400.0,6.0],[500.0,6.9],[600.0,7.55],[700.0,8.3],[800.0,8.8],[900.0,9.5],[1000.0,10.0],[1250.0,11.3],[1500.0,12.4],[1750.0,13.6],[2000.0,14.5],[2250.0,15.4],[2500.0,16.2],[2750.0,17.0],[3000.0,18.0],[3500.0,19.5],[4000.0,21.0],[4500.0,22.0],[5000.0,23.5],[6000.0,25.5],[7000.0,27.5],[8000.0,29.0],[9000.0,30.5],[10000.0,32.0]],"uffFlux":[[10.0,1.7],[12.0,1.87],[14.0,2.03],[16.0,2.17],[18.0,2.32],[20.0,2.45],[25.0,2.75],[30.0,3.0],[35.0,3.25],[40.0,3.55],[50.0,3.9],[60.0,4.2],[70.0,4.5],[80.0,4.8],[90.0,5.15],[100.0,5.35],[120.0,5.8],[140.0,6.2],[160.0,6.6],[180.0,7.1],[200.0,7.45],[225.0,7.8],[250.0,8.1],[275.0,8.4],[300.0,8.7],[400.0,9.8],[500.0,10.8],[600.0,11.6],[700.0,12.4],[800.0,13.0],[900.0,13.7],[1000.0,14.2],[1250.0,15.5],[1500.0,16.5],[1750.0,17.5],[2000.0,18.5],[2250.0,19.2],[2500,20.0],[2750.0,20.7],[3000.0,21.4],[3500.0,22.5],[4000.0,24.0],[4500.0,25.0],[5000.0,26.2],[6000.0,28.0],[7000.0,29.0],[8000.0,30.0],[9000.0,31.5],[10000.0,32.0]]};
+const PREN={"res":{"A":[[0.06,0.05],[0.1,0.1],[0.15,0.15],[0.21,0.2],[0.29,0.25],[0.38,0.3],[0.48,0.35],[0.6,0.4],[0.72,0.45],[0.87,0.5],[1.03,0.55],[1.2,0.6],[1.39,0.65],[1.59,0.7],[1.81,0.75],[2.04,0.8],[2.29,0.85],[2.55,0.9],[2.83,0.95],[3.13,1.0],[3.45,1.05],[3.78,1.1],[4.12,1.15],[4.49,1.2],[4.87,1.25],[5.26,1.3],[5.68,1.35],[6.11,1.4],[6.56,1.45],[7.03,1.5],[7.51,1.55],[8.02,1.6],[8.54,1.65],[9.08,1.7],[9.63,1.75],[10.21,1.8],[10.8,1.85],[11.41,1.9],[12.04,1.95],[12.69,2.0],[13.36,2.05],[14.05,2.1],[14.76,2.15],[15.48,2.2],[16.23,2.25],[16.99,2.3],[17.78,2.35],[18.58,2.4],[19.4,2.45],[20.24,2.5],[21.08,2.55],[23.53,2.6],[26.25,2.65],[29.29,2.7],[32.69,2.75],[36.47,2.8],[40.7,2.85],[45.42,2.9],[50.68,2.95],[56.55,3.0],[63.11,3.05],[70.42,3.1],[78.58,3.15],[87.68,3.2],[97.84,3.25],[109.18,3.3],[121.83,3.35],[135.95,3.4],[151.7,3.45],[169.28,3.5],[188.89,3.55],[210.78,3.6],[235.2,3.65],[262.46,3.7],[292.87,3.75],[326.8,3.8],[364.67,3.85],[406.93,3.9],[454.08,3.95],[506.69,4.0]],"B":[[0.55,0.55],[0.6,0.6],[0.65,0.65],[0.7,0.7],[0.75,0.75],[0.8,0.8],[0.85,0.85],[0.9,0.9],[0.95,0.95],[1.0,1.0],[1.15,1.05],[1.31,1.1],[1.5,1.15],[1.7,1.2],[1.92,1.25],[2.17,1.3],[2.44,1.35],[2.74,1.4],[3.06,1.45],[3.41,1.5],[3.8,1.55],[4.22,1.6],[4.67,1.65],[5.17,1.7],[5.7,1.75],[6.27,1.8],[6.89,1.85],[7.56,1.9],[8.28,1.95],[9.05,2.0],[9.88,2.05],[10.76,2.1],[11.71,2.15],[12.72,2.2],[13.8,2.25],[14.95,2.3],[16.17,2.35],[17.48,2.4],[18.86,2.45],[20.33,2.5]]},"uff":{"A":[[0.06,0.05],[0.1,0.1],[0.15,0.15],[0.21,0.2],[0.26,0.25],[0.32,0.3],[0.37,0.35],[0.42,0.4],[0.47,0.45],[0.53,0.5],[0.58,0.55],[0.63,0.6],[0.69,0.65],[0.74,0.7],[0.79,0.75],[0.84,0.8],[0.9,0.85],[0.95,0.9],[1.0,0.95],[1.05,1.0],[1.08,1.03]],"B":[[0.55,0.55],[0.6,0.6],[0.65,0.65],[0.7,0.7],[0.75,0.75],[0.8,0.8],[0.85,0.85],[0.9,0.9],[0.95,0.95],[1.0,1.0],[1.09,1.03]],"M":[[1.15,1.1],[1.19,1.15],[1.23,1.2],[1.27,1.25],[1.31,1.3],[1.35,1.35],[1.39,1.4],[1.44,1.45],[1.49,1.5],[1.53,1.55],[1.58,1.6],[1.64,1.65],[1.69,1.7],[1.74,1.75],[1.8,1.8],[1.86,1.85],[1.92,1.9],[1.98,1.95],[2.05,2.0],[2.12,2.05],[2.18,2.1],[2.26,2.15],[2.33,2.2],[2.4,2.25],[2.48,2.3],[2.56,2.35],[2.65,2.4],[2.73,2.45],[2.82,2.5],[2.92,2.55],[3.01,2.6],[3.11,2.65],[3.21,2.7],[3.31,2.75],[3.42,2.8],[3.53,2.85],[3.65,2.9],[3.77,2.95],[3.89,3.0],[4.02,3.05],[4.15,3.1],[4.28,3.15],[4.42,3.2],[4.57,3.25],[4.72,3.3],[4.87,3.35],[5.03,3.4],[5.19,3.45],[5.36,3.5],[5.54,3.55],[5.72,3.6],[5.9,3.65],[6.1,3.7],[6.29,3.75],[6.5,3.8],[6.71,3.85],[6.93,3.9],[7.16,3.95],[7.39,4.0],[7.63,4.05],[7.88,4.1],[8.14,4.15],[8.4,4.2],[8.67,4.25],[8.96,4.3],[9.25,4.35],[9.55,4.4],[9.86,4.45],[10.18,4.5],[10.52,4.55],[10.86,4.6],[11.21,4.65],[11.58,4.7],[11.95,4.75],[12.34,4.8],[12.75,4.85],[13.16,4.9],[13.59,4.95],[14.03,5.0],[14.49,5.05],[14.96,5.1],[15.45,5.15],[15.95,5.2],[16.47,5.25],[17.01,5.3],[17.57,5.35],[18.14,5.4],[18.73,5.45],[19.34,5.5],[19.97,5.55],[20.62,5.6],[21.29,5.65],[21.99,5.7],[22.7,5.75],[23.44,5.8],[24.21,5.85],[25.0,5.9],[25.81,5.95],[26.65,6.0],[28.42,6.1],[30.3,6.2],[32.31,6.3],[34.45,6.4],[36.73,6.5],[39.17,6.6],[41.76,6.7],[44.53,6.8],[47.48,6.9],[50.62,7.0],[53.98,7.1],[57.55,7.2],[61.37,7.3],[65.43,7.4],[69.77,7.5],[74.39,7.6],[79.31,7.7],[84.57,7.8],[90.17,7.9],[96.15,8.0],[102.52,8.1],[109.31,8.2],[116.55,8.3],[124.27,8.4],[132.5,8.5],[141.28,8.6],[150.64,8.7],[160.62,8.8],[171.26,8.9],[182.61,9.0],[194.7,9.1],[207.6,9.2],[221.36,9.3],[236.02,9.4],[251.66,9.5],[268.33,9.6],[286.1,9.7],[305.06,9.8],[325.27,9.9],[346.82,10.0],[369.79,10.1],[394.29,10.2],[420.41,10.3],[448.26,10.4],[477.96,10.5],[509.63,10.6]]},"hot":{"A":[[0.06,0.05],[0.1,0.1],[0.15,0.15],[0.21,0.2],[0.28,0.25],[0.36,0.3],[0.45,0.35],[0.56,0.4],[0.67,0.45],[0.79,0.5],[0.92,0.55],[1.06,0.6],[1.2,0.65],[1.35,0.7],[1.51,0.75],[1.67,0.8],[1.84,0.85],[2.02,0.9],[2.2,0.95],[2.39,1.0],[2.58,1.05],[2.78,1.1],[2.98,1.15],[3.19,1.2],[3.41,1.25],[3.63,1.3],[3.85,1.35],[4.08,1.4],[4.32,1.45],[4.56,1.5],[4.8,1.55],[5.05,1.6],[5.3,1.65],[5.56,1.7],[5.83,1.75],[6.09,1.8],[6.37,1.85],[6.64,1.9],[6.92,1.95],[7.21,2.0],[7.5,2.05],[7.79,2.1]],"B":[[0.55,0.55],[0.6,0.6],[0.65,0.65],[0.7,0.7],[0.75,0.75],[0.8,0.8],[0.85,0.85],[0.9,0.9],[0.95,0.95],[1.0,1.0],[1.14,1.05],[1.3,1.1],[1.47,1.15],[1.65,1.2],[1.84,1.25],[2.05,1.3],[2.27,1.35],[2.51,1.4],[2.76,1.45],[3.03,1.5],[3.31,1.55],[3.61,1.6],[3.93,1.65],[4.26,1.7],[4.61,1.75],[4.93,1.8],[5.37,1.85],[5.78,1.9],[6.2,1.95],[6.64,2.0],[7.11,2.05],[7.59,2.1]],"M":[[8.1,2.15],[8.33,2.2],[8.56,2.25],[8.8,2.3],[9.04,2.35],[9.29,2.4],[9.55,2.45],[9.81,2.5],[10.09,2.55],[10.37,2.6],[10.65,2.65],[10.95,2.7],[11.25,2.75],[11.56,2.8],[11.88,2.85],[12.21,2.9],[12.55,2.95],[12.9,3.0],[13.26,3.05],[13.62,3.1],[14.0,3.15],[14.39,3.2],[14.79,3.25],[15.2,3.3],[15.62,3.35],[16.05,3.4],[16.5,3.45],[16.95,3.5],[17.42,3.55],[17.91,3.6],[18.4,3.65],[18.91,3.7],[19.44,3.75],[19.98,3.8],[20.53,3.85],[21.1,3.9],[21.68,3.95],[22.29,4.0],[22.9,4.05],[23.54,4.1],[24.19,4.15],[24.86,4.2],[25.55,4.25],[26.26,4.3],[26.98,4.35],[27.73,4.4],[28.5,4.45],[29.29,4.5],[30.1,4.55],[30.94,4.6],[31.79,4.65],[32.68,4.7],[33.58,4.75],[34.51,4.8],[35.47,4.85],[36.45,4.9],[37.46,4.95],[38.5,5.0],[39.57,5.05],[40.66,5.1],[41.79,5.15],[42.95,5.2],[44.14,5.25],[45.36,5.3],[46.62,5.35],[47.91,5.4],[49.24,5.45],[50.6,5.5],[52.01,5.55],[53.45,5.6],[54.93,5.65],[56.45,5.7],[58.02,5.75],[59.62,5.8],[61.28,5.85],[62.97,5.9],[64.72,5.95],[66.51,6.0],[70.25,6.1],[74.2,6.2],[78.37,6.3],[82.77,6.4],[87.42,6.5],[92.34,6.6],[97.53,6.7],[103.01,6.8],[108.8,6.9],[114.91,7.0],[121.37,7.1],[128.19,7.2],[135.39,7.3],[143.0,7.4],[151.04,7.5],[159.52,7.6],[168.49,7.7],[177.96,7.8],[187.96,7.9],[198.52,8.0],[209.68,8.1],[221.46,8.2],[233.9,8.3],[247.05,8.4],[260.93,8.5],[275.6,8.6],[291.08,8.7],[307.44,8.8],[324.72,8.9],[342.97,9.0],[362.24,9.1],[382.6,9.2],[404.1,9.3],[426.81,9.4],[450.79,9.5],[476.12,9.6],[502.88,9.7],[531.14,9.8]]},"osp":{"A":[[0.06,0.05],[0.1,0.1],[0.15,0.15],[0.21,0.2],[0.28,0.25],[0.36,0.3],[0.45,0.35],[0.56,0.4],[0.67,0.45],[0.79,0.5],[0.92,0.55],[1.06,0.6],[1.22,0.65],[1.38,0.7],[1.55,0.75],[1.72,0.8],[1.91,0.85],[2.1,0.9],[2.29,0.95],[2.5,1.0],[2.71,1.05],[2.92,1.1],[3.15,1.15],[3.38,1.2],[3.61,1.25],[3.86,1.3],[4.11,1.35],[4.36,1.4],[4.62,1.45],[4.89,1.5],[5.17,1.55],[5.45,1.6],[5.73,1.65],[6.02,1.7],[6.32,1.75],[6.62,1.8],[6.93,1.85],[7.24,1.9],[7.56,1.95],[7.89,2.0],[8.22,2.05],[8.55,2.1],[8.89,2.15],[9.24,2.2]],"B":[[0.55,0.55],[0.6,0.6],[0.65,0.65],[0.7,0.7],[0.75,0.75],[0.8,0.8],[0.85,0.85],[0.9,0.9],[0.95,0.95],[1.0,1.0],[1.14,1.05],[1.3,1.1],[1.47,1.15],[1.65,1.2],[1.84,1.25],[2.05,1.3],[2.27,1.35],[2.51,1.4],[2.76,1.45],[3.03,1.5],[3.31,1.55],[3.61,1.6],[3.93,1.65],[4.26,1.7],[4.61,1.75],[4.93,1.8],[5.37,1.85],[5.78,1.9],[6.2,1.95],[6.64,2.0],[7.11,2.05],[7.59,2.1],[8.1,2.15],[8.62,2.2]],"M":[[9.36,2.25],[9.56,2.35],[9.66,2.4],[9.77,2.45],[9.87,2.5],[9.98,2.55],[10.08,2.6],[10.19,2.65],[10.3,2.7],[10.41,2.75],[10.52,2.8],[10.63,2.85],[10.75,2.9],[10.86,2.95],[10.98,3.0],[11.1,3.05],[11.22,3.1],[11.34,3.15],[11.46,3.2],[11.58,3.25],[11.7,3.3],[11.83,3.35],[11.96,3.4],[12.08,3.45],[12.21,3.5],[12.34,3.55],[12.48,3.6],[12.61,3.65],[12.75,3.7],[12.88,3.75],[13.02,3.8],[13.16,3.85],[13.3,3.9],[13.44,3.95],[13.59,4.0],[13.73,4.05],[13.88,4.1],[14.03,4.15],[14.18,4.2],[14.33,4.25],[14.48,4.3],[14.64,4.35],[14.8,4.4],[14.95,4.45],[15.11,4.5],[15.28,4.55],[15.44,4.6],[15.6,4.65],[15.77,4.7],[15.94,4.75],[16.11,4.8],[16.28,4.85],[16.46,4.9],[16.63,4.95],[16.81,5.0],[17.18,5.1],[17.54,5.2],[17.92,5.3],[18.31,5.4],[18.7,5.5],[19.11,5.6],[19.52,5.7],[19.94,5.8],[20.37,5.9],[20.81,6.0],[21.25,6.1],[21.71,6.2],[22.18,6.3],[22.66,6.4],[23.14,6.5],[23.64,6.6],[24.15,6.7],[24.67,6.8],[25.2,6.9],[25.75,7.0],[26.3,7.1],[26.87,7.2],[27.45,7.3],[28.04,7.4],[28.64,7.5],[29.26,7.6],[29.89,7.7],[30.53,7.8],[31.19,7.9],[31.86,8.0],[32.55,8.1],[33.25,8.2],[33.96,8.3],[34.7,8.4],[35.44,8.5],[36.21,8.6],[36.99,8.7],[37.78,8.8],[38.6,8.9],[39.43,9.0],[40.28,9.1],[41.14,9.2],[42.03,9.3],[42.93,9.4],[43.86,9.5],[44.8,9.6],[45.77,9.7],[46.75,9.8],[47.76,9.9],[48.79,10.0],[49.84,10.1],[50.91,10.2],[53.13,10.4],[55.44,10.6],[57.86,10.8],[60.38,11.0],[63.0,11.2],[65.75,11.4],[68.61,11.6],[71.6,11.8],[74.71,12.0],[77.97,12.2],[81.36,12.4],[84.9,12.6],[88.6,12.8],[92.46,13.0],[96.48,13.2],[100.68,13.4],[105.06,13.6],[109.64,13.8],[114.41,14.0],[119.39,14.2],[124.59,14.4],[130.02,14.6],[135.68,14.8],[141.58,15.0],[147.75,15.2]]},"sco":{"M":[[0.1,0.1],[0.2,0.2],[0.3,0.3],[0.4,0.4],[0.5,0.5],[0.6,0.6],[0.7,0.7],[0.8,0.8],[0.9,0.9],[1.0,1.0],[1.1,1.1],[1.2,1.2],[1.3,1.3],[1.4,1.4],[1.5,1.5],[1.62,1.6],[1.74,1.7],[1.87,1.8],[2.01,1.9],[2.15,2.0],[2.3,2.1],[2.46,2.2],[2.63,2.3],[2.8,2.4],[2.98,2.5],[3.17,2.6],[3.37,2.7],[3.58,2.8],[3.8,2.9],[4.03,3.0],[4.27,3.1],[4.51,3.2],[4.77,3.3],[5.04,3.4],[5.32,3.5],[5.61,3.6],[5.91,3.7],[6.23,3.8],[6.55,3.9],[6.89,4.0],[7.24,4.1],[7.61,4.2],[7.98,4.3],[8.37,4.4],[8.78,4.5],[9.2,4.6],[9.63,4.7],[10.08,4.8],[10.31,4.85],[10.54,4.9],[10.78,4.95],[11.16,5.0],[13.9,5.4],[14.68,5.5],[15.5,5.6],[16.37,5.7],[17.3,5.8],[18.27,5.9],[19.3,6.0],[20.38,6.1],[21.53,6.2],[22.74,6.3],[24.02,6.4],[25.37,6.5],[26.79,6.6],[28.3,6.7],[29.89,6.8],[31.57,6.9],[33.35,7.0],[35.22,7.1],[37.2,7.2],[39.3,7.3],[41.51,7.4],[43.84,7.5],[46.31,7.6],[48.91,7.7],[51.66,7.8],[54.57,7.9],[57.64,8.0],[60.88,8.1],[64.3,8.2],[67.92,8.3],[71.74,8.4],[75.77,8.5],[80.03,8.6],[84.53,8.7],[89.29,8.8],[94.31,8.9],[99.61,9.0],[105.22,9.1],[111.13,9.2],[117.38,9.3],[123.99,9.4],[130.96,9.5],[138.32,9.6],[146.1,9.7],[154.32,9.8],[163.0,9.9],[172.16,10.0],[181.85,10.1],[192.07,10.2],[202.88,10.3],[214.29,10.4],[226.34,10.5],[239.07,10.6],[252.51,10.7],[266.71,10.8],[281.71,10.9],[297.55,11.0],[314.29,11.1],[331.96,11.2],[350.63,11.3],[370.35,11.4],[391.18,11.5],[413.18,11.6],[436.42,11.7],[460.96,11.8],[486.89,11.9],[514.27,12.0],[543.19,12.1],[573.74,12.2],[606.01,12.3]]}};
+
+// ---------------------------------------------------------------- apparecchi
+// uPriv/uPub = UC UNI 9182 [AF,AC,AT]; qa = portate nominali Caleffi Tab.2 [AF,AC] l/s; lu = EN 806-3 [AF,AC]; fx = passo rapido/flussometro
+const APPS=[
+ {id:'lav',n:'Lavabo',g:'d',uPriv:[.75,.75,1],uPub:[1.5,1.5,2],qa:[.1,.1],lu:[1,1],acs:11},
+ {id:'bid',n:'Bidet',g:'d',uPriv:[.75,.75,1],uPub:[1.5,1.5,2],qa:[.1,.1],lu:[1,1],acs:9},
+ {id:'vas',n:'Vasca da bagno',g:'d',uPriv:[1.5,1.5,2],uPub:[3,3,4],qa:[.2,.2],lu:[4,4],acs:150},
+ {id:'doc',n:'Doccia',g:'d',uPriv:[1.5,1.5,2],uPub:[3,3,4],qa:[.15,.15],lu:[2,2],acs:55},
+ {id:'wcc',n:'Vaso a cassetta',g:'d',uPriv:[3,0,3],uPub:[5,0,5],qa:[.1,0],lu:[1,0]},
+ {id:'wcp',n:'Vaso a passo rapido',g:'d',uPriv:[6,0,6],uPub:[10,0,10],qa:[1.5,0],lu:[15,0],fx:1},
+ {id:'wcf',n:'Vaso a flussometro',g:'d',uPriv:[6,0,6],uPub:[10,0,10],qa:[1.5,0],lu:[15,0],fx:1},
+ {id:'lvc',n:'Lavello cucina',g:'d',uPriv:[1.5,1.5,2],uPub:[2,2,3],qa:[.2,.2],lu:[2,2],acs:18},
+ {id:'lbi',n:'Lavabiancheria',g:'d',uPriv:[2,0,2],uPub:[2,0,2],qa:[.1,0],lu:[2,0]},
+ {id:'lst',n:'Lavastoviglie',g:'d',uPriv:[2,0,2],uPub:[2,0,2],qa:[.2,0],lu:[2,0]},
+ {id:'pil',n:'Pilozzo',g:'d',uPriv:[1.5,1.5,2],uPub:[2,2,3],qa:[.2,.2],lu:[2,2]},
+ {id:'g38',n:'Rubinetto giardino 3/8"',g:'d',uPriv:[1,0,1],uPub:[2,0,2],qa:[.34,0],lu:[5,0]},
+ {id:'g12',n:'Rubinetto giardino 1/2"',g:'d',uPriv:[2,0,2],uPub:[4,0,4],qa:[.57,0],lu:[5,0]},
+ {id:'g34',n:'Rubinetto giardino 3/4"',g:'d',uPriv:[3,0,3],uPub:[6,0,6],qa:[.87,0],lu:[9,0],h:1},
+ {id:'g1',n:'Rubinetto giardino 1"',g:'d',uPriv:[6,0,6],uPub:[10,0,10],qa:[2,0],lu:[20,0],h:1},
+ {id:'orv',n:'Orinatoio a rubinetto (vela)',g:'c',uPriv:[.75,0,.75],uPub:[.75,0,.75],qa:[.1,0],lu:[1,0],h:1},
+ {id:'orf',n:'Orinatoio passo rapido / flussometro',g:'c',uPriv:[10,0,10],uPub:[10,0,10],qa:[.3,0],lu:[3,0],fx:1},
+ {id:'lvk',n:'Lavatoio di cucina (non domestico)',g:'c',uPriv:[3,3,4],uPub:[3,3,4],qa:[.2,.2],lu:[8,8]},
+ {id:'vuc',n:'Vuotatoio a cassetta',g:'c',uPriv:[5,0,5],uPub:[5,0,5],qa:[.15,0],lu:[1,0]},
+ {id:'vuf',n:'Vuotatoio passo rapido / flussometro',g:'c',uPriv:[10,0,10],uPub:[10,0,10],qa:[1.5,0],lu:[15,0],fx:1},
+ {id:'lca',n:'Lavabo a canale (per rubinetto)',g:'c',uPriv:[1.5,1.5,2],uPub:[1.5,1.5,2],qa:[.1,.1],lu:[1,1]},
+ {id:'lpi',n:'Lavapiedi',g:'c',uPriv:[1.5,1.5,2],uPub:[1.5,1.5,2],qa:[.1,.1],lu:[1,1]},
+ {id:'lpa',n:'Lavapadelle',g:'c',uPriv:[2,2,3],uPub:[2,2,3],qa:[.2,.2],lu:[2,2]},
+ {id:'lcl',n:'Lavabo clinico',g:'c',uPriv:[1.5,1.5,2],uPub:[1.5,1.5,2],qa:[.1,.1],lu:[1,1]},
+ {id:'bev',n:'Beverino',g:'c',uPriv:[.75,0,.75],uPub:[.75,0,.75],qa:[.1,0],lu:[1,0],h:1},
+ {id:'dem',n:'Doccia di emergenza',g:'c',uPriv:[3,0,3],uPub:[3,0,3],qa:[.3,0],lu:[3,0],h:1}
+];
+const APP=Object.fromEntries(APPS.map(a=>[a.id,a]));
+
+// ---------------------------------------------------------------- tubi
+const MATS=[
+ {id:'mst',n:'Multistrato PE-X/Al/PE-X',r:'low',s:[['16×2',16,12],['20×2',20,16],['26×3',26,20],['32×3',32,26],['40×3,5',40,33],['50×4',50,42],['63×4,5',63,54],['75×5',75,65],['90×7',90,76]]},
+ {id:'cu',n:'Rame EN 1057',r:'low',s:[['12×1',12,10],['14×1',14,12],['15×1',15,13],['16×1',16,14],['18×1',18,16],['22×1',22,20],['28×1,5',28,25],['35×1,5',35,32],['42×1,5',42,39],['54×2',54,50],['64×2',64,60],['76,1×2',76.1,72.1],['88,9×2',88.9,84.9],['108×2,5',108,103]]},
+ {id:'zn',n:'Acciaio zincato (serie media)',r:'mid',s:[['1/2"',21.3,16.3],['3/4"',26.9,21.7],['1"',33.7,27.4],['1 1/4"',42.4,36.1],['1 1/2"',48.3,42],['2"',60.3,53.1],['2 1/2"',76.1,68.7],['3"',88.9,80.6],['4"',114.3,105.3]],steel:1},
+ {id:'ix',n:'Acciaio inox a pressare',r:'low',s:[['15×1',15,13],['18×1',18,16],['22×1,2',22,19.6],['28×1,2',28,25.6],['35×1,5',35,32],['42×1,5',42,39],['54×1,5',54,51],['76,1×2',76.1,72.1],['88,9×2',88.9,84.9],['108×2',108,104]]},
+ {id:'pex',n:'PE-X SDR 7,4',r:'low',s:[['16×2,2',16,11.6],['20×2,8',20,14.4],['25×3,5',25,18],['32×4,4',32,23.2],['40×5,5',40,29],['50×6,9',50,36.2],['63×8,6',63,45.8]]},
+ {id:'pp20',n:'PP-R PN20 (SDR 6)',r:'low',s:[['20×3,4',20,13.2],['25×4,2',25,16.6],['32×5,4',32,21.2],['40×6,7',40,26.6],['50×8,3',50,33.4],['63×10,5',63,42],['75×12,5',75,50],['90×15',90,60],['110×18,3',110,73.4],['125×20,8',125,83.4]]},
+ {id:'pp16',n:'PP-R PN16 (SDR 7,4)',r:'low',s:[['20×2,8',20,14.4],['25×3,5',25,18],['32×4,4',32,23.2],['40×5,5',40,29],['50×6,9',50,36.2],['63×8,6',63,45.8],['75×10,3',75,54.4],['90×12,3',90,65.4],['110×15,1',110,79.8],['125×17,1',125,90.8]]},
+ {id:'pe10',n:'PEAD PN10 (interrato)',r:'low',s:[['20',20,16.2],['25',25,20.4],['32',32,26],['40',40,32.6],['50',50,40.8],['63',63,51.4],['75',75,61.2],['90',90,73.6],['110',110,90],['125',125,102.2],['140',140,114.4],['160',160,130.8]]},
+ {id:'pe16',n:'PEAD PN16 (interrato)',r:'low',s:[['20',20,14.4],['25',25,18],['32',32,23],['40',40,28.8],['50',50,36.2],['63',63,45.6],['75',75,54.2],['90',90,65],['110',110,79.6],['125',125,90.4],['140',140,101.2],['160',160,115.8]]}
+];
+const MAT=Object.fromEntries(MATS.map(m=>[m.id,m]));
+const VSTEEL={A:[1.1,1.1,1.3,1.6,1.8,2.0,2.2,2.5,2.5],B:[1.3,1.3,1.5,1.8,2.1,2.3,2.5,2.8,2.8]};
+function vTab9(mat,i,imp){
+  if(mat.steel) return VSTEEL[imp][Math.min(i,8)];
+  const de=mat.s[i][1];
+  const T=[[26,1.2,1.4],[35,1.3,1.5],[42,1.6,1.8],[54,1.9,2.2],[64,2.1,2.4],[76.1,2.3,2.6],[1e9,2.5,2.8]];
+  for(const t of T) if(de<=t[0]) return imp==='A'?t[1]:t[2];
+}
+
+// ---------------------------------------------------------------- ACS presets
+const ACSP={
+ res1:{n:'Alloggio con 1 locale servizi',u:'alloggi',l:260,tu:40,tpu:1.5,tpr:2,res:1},
+ res2:{n:'Alloggio con 2 locali servizi',u:'alloggi',l:340,tu:40,tpu:1.5,tpr:2,res:1},
+ uffP:{n:'Uffici – servizio WC+lavabo (produzione)',u:'servizi',l:40,tu:40,tpu:1.5,tpr:2},
+ uffD:{n:'Uffici – servizio WC+lavabo (dirigenza)',u:'servizi',l:25,tu:40,tpu:1.5,tpr:2},
+ hotV:{n:'Albergo – camera con vasca, consumo normale',u:'camere',l:180,tu:40,tpu:2.5,tpr:2},
+ hotD:{n:'Albergo – camera con doccia, consumo normale',u:'camere',l:130,tu:40,tpu:2.5,tpr:2},
+ hotVc:{n:'Albergo – camera con vasca, consumo concentrato',u:'camere',l:180,tu:40,tpu:1.5,tpr:2},
+ hotDc:{n:'Albergo – camera con doccia, consumo concentrato',u:'camere',l:130,tu:40,tpu:1.5,tpr:2},
+ osp:{n:'Ospedale – posto letto',u:'letti',l:120,tu:40,tpu:2,tpr:2},
+ cli:{n:'Clinica – posto letto',u:'letti',l:130,tu:40,tpu:4,tpr:2},
+ casN:{n:'Caserma, collegio – posto letto (prestazioni normali)',u:'letti',l:80,tu:40,tpu:2,tpr:2},
+ casE:{n:'Caserma, collegio – posto letto (prestazioni elevate)',u:'letti',l:100,tu:40,tpu:2,tpr:2},
+ palD:{n:'Palestra, centro sportivo – doccia',u:'docce',l:150,tu:40,tpu:.5,tpr:1.5},
+ palR:{n:'Palestra, centro sportivo – rubinetto (lavabo, lavapiedi)',u:'rubinetti',l:60,tu:40,tpu:.5,tpr:1.5},
+ spoD:{n:'Spogliatoio stabilimento – doccia',u:'docce',l:150,tu:40,tpu:.5,tpr:1},
+ spoR:{n:'Spogliatoio stabilimento – rubinetto',u:'rubinetti',l:60,tu:40,tpu:.5,tpr:1},
+ cucA:{n:'Cucina – coperto, ristorante di livello elevato',u:'coperti',l:15,tu:60,tpu:2,tpr:2},
+ cucM:{n:'Cucina – coperto, ristorante di livello medio',u:'coperti',l:10,tu:60,tpu:2,tpr:2},
+ cucO:{n:'Cucina – coperto, ospedale o comunità',u:'coperti',l:8,tu:60,tpu:2,tpr:2},
+ lavO:{n:'Lavanderia – paziente ospedale/clinica',u:'pazienti',l:30,tu:60,tpu:2,tpr:2},
+ lavC:{n:'Lavanderia – ospite comunità',u:'ospiti',l:15,tu:60,tpu:2,tpr:2},
+ lavHa:{n:'Lavanderia – ospite albergo elevato (biancheria)',u:'ospiti',l:25,tu:60,tpu:2,tpr:2},
+ lavHm:{n:'Lavanderia – ospite albergo medio (biancheria)',u:'ospiti',l:15,tu:60,tpu:2,tpr:2},
+ lavRa:{n:'Lavanderia – coperto ristorante elevato',u:'coperti',l:6,tu:60,tpu:2,tpr:2},
+ lavRm:{n:'Lavanderia – coperto ristorante medio',u:'coperti',l:4,tu:60,tpu:2,tpr:2},
+ cust:{n:'Utenza personalizzata',u:'unità',l:50,tu:40,tpu:1,tpr:2}
+};
+const RESF=[[5,1],[12,.95],[20,.9],[30,.85],[45,.8],[60,.75],[80,.7],[110,.65],[150,.6],[200,.55],[1e9,.5]];
+const resF=n=>{for(const r of RESF) if(n<=r[0]) return r[1];};
+
+// ---------------------------------------------------------------- utilità
+const $=s=>document.querySelector(s);
+const num=v=>{const x=parseFloat(String(v??'').replace(',','.'));return isFinite(x)?x:0;};
+const fmt=(x,d=2)=>isFinite(x)?x.toLocaleString('it-IT',{minimumFractionDigits:d,maximumFractionDigits:d}):'–';
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let UID=Date.now()%100000;const uid=p=>p+(UID++).toString(36);
+function interp(tab,x){ // tab [[x,y]...] crescente
+  if(x<=0) return {v:0,f:''};
+  const n=tab.length;
+  if(x<tab[0][0]) return {v:x*tab[0][1]/tab[0][0],f:'sotto tabella'};
+  if(x>tab[n-1][0]){const [x1,y1]=tab[n-2],[x2,y2]=tab[n-1];const b=Math.log(y2/y1)/Math.log(x2/x1);return {v:y2*Math.pow(x/x2,b),f:'estrapolato'};}
+  for(let i=1;i<n;i++) if(x<=tab[i][0]){const [x1,y1]=tab[i-1],[x2,y2]=tab[i];return {v:y1+(y2-y1)*(x-x1)/(x2-x1),f:''};}
+}
+const nu=T=>1.792e-6/(1+0.0337*T+0.000221*T*T);
+const rho=T=>1000*(1-(T+288.9414)/(508929.2*(T+68.12963))*Math.pow(T-3.9863,2));
+function rLoss(rough,Gls,D,T){ // mm c.a./m
+  const G=Gls*3600; if(G<=0) return 0;
+  return rough==='mid'?3.3*Math.pow(nu(T),.13)*rho(T)*Math.pow(G,1.87)/Math.pow(D,5.01):14.68*Math.pow(nu(T),.25)*rho(T)*Math.pow(G,1.75)/Math.pow(D,4.75);
+}
+
+// ---------------------------------------------------------------- curve prEN
+function prenCurves(dest){
+  const P=PREN[dest];
+  if(dest==='res') return {A:P.A.map(p=>[p[0],p[1]]),B:P.B.map(p=>[p[0],p[1]])};
+  if(dest==='sco') return {A:P.M,B:P.M,single:1};
+  return {A:[...P.A,...P.M],B:[...P.B,...P.M]};
+}
+
+// ---------------------------------------------------------------- stato
+const DEFAULT=()=>{
+  const tA=uid('t'),tB=uid('t');
+  const st={
+   cfg:{dest:'res',ucTab:'auto',uniCurve:'auto',method:'uni',tAF:10,tAC:50,imp:'A',vcap:2,tol:5},
+   tips:[
+    {id:tA,name:'Alloggio A – 1 bagno con vasca',qty:8,cAF:0,cAC:0,c:{lav:1,bid:1,vas:1,wcc:1,lvc:1,lbi:1,lst:1}},
+    {id:tB,name:'Alloggio B – bagno + servizio con doccia',qty:16,cAF:0,cAC:0,c:{lav:2,bid:1,vas:1,doc:1,wcc:2,lvc:1,lbi:1,lst:1}}
+   ],
+   sel:tA,
+   net:{Ppr:45,dh:11,pmin:10,F:.7,mode:'J',mat:'mst',
+    happ:[{id:'cg',n:'Contatore generale',v:7,on:1},{id:'ca',n:"Contatore d'alloggio",v:3.5,on:1},{id:'dis',n:'Disconnettore',v:5.5,on:1},{id:'add',n:'Addolcitore',v:8,on:0},{id:'dos',n:'Dosatore di polifosfati',v:4,on:0},{id:'mt',n:'Miscelatore termostatico (solo AC)',v:4,on:1,ac:1},{id:'me',n:'Miscelatore elettronico (solo AC)',v:2,on:0,ac:1},{id:'sp',n:'Scambiatore a piastre (solo AC)',v:4,on:0,ac:1}],
+    rows:[]},
+   aut:{G:2.9,pmin:50,dp:10,pacq:40,l1:6,l2:5,l3:2,np:2,eta:.6,amode:'auto',a:30,pset:'',cat:'Z',rab:72,rdot:250,rh:8,rmin:15,rfam:'zn'},
+   acs:{tf:10,ta:60,tmand:75,dt:5,k:'500',fu:100,Gi:1,tui:40,fam:'auto',chkS:'1',maxn:3,rows:[]},
+   rep:{prj:'Esempio – condominio 4 piani, 24 alloggi',aut:''}
+  };
+  const R=(name,svc,L,a,b,crit,mat)=>({id:uid('r'),name,svc,L,c:{[tA]:a,[tB]:b},mat:mat||'',size:'auto',crit:crit?1:0});
+  st.net.rows=[
+   R('Allacciamento → centrale (AF+AC)','AFAC',8,8,16,1,'pe16'),
+   R('Collettore AF – tratto 1','AF',6,8,16,1,'zn'),
+   R('Collettore AF – tratto 2 (colonna 2)','AF',14,4,8,1,'zn'),
+   R('Colonna AF – P.T.→1°','AF',3,4,8,1),
+   R('Colonna AF – 1°→2°','AF',3,3,6,1),
+   R('Colonna AF – 2°→3°','AF',3,2,4,1),
+   R('Colonna AF – stacco 3° piano','AF',2,1,2,1),
+   R('Derivazione AF alloggio B (3° piano)','AF',12,0,1,1),
+   R('Collettore AC – centrale → colonna 2','AC',20,4,8,1,'zn'),
+   R('Colonna AC – P.T.→3°','AC',9,4,8,1),
+   R('Derivazione AC alloggio B (3° piano)','AC',12,0,1,1)
+  ];
+  st.acs.rows=scenario('res');
+  return st;
+};
+function acsRow(key,qty,over){const p=ACSP[key];return Object.assign({id:uid('h'),key,name:p.n,qty,l:p.l,tu:p.tu,tpu:p.tpu,tpr:p.tpr},over||{});}
+function scenario(k){
+  if(k==='res') return [acsRow('res1',8),acsRow('res2',16)];
+  if(k==='hot') return [acsRow('hotD',48),acsRow('hotV',12),acsRow('cucM',120),acsRow('lavHm',110)];
+  if(k==='spo') return [acsRow('palD',20,{tpu:.5}),acsRow('palR',10,{tpu:.5})];
+  if(k==='ind') return [acsRow('spoD',30,{tpu:.5,tpr:4}),acsRow('spoR',30,{tpu:.5,tpr:4}),acsRow('cucO',150)];
+  return [];
+}
+let S;
+const LS='idrosan_v1';
+function save(){try{localStorage.setItem(LS,JSON.stringify(S));}catch(e){}}
+function load(){try{const t=localStorage.getItem(LS);if(t){const o=JSON.parse(t);if(o&&o.cfg&&o.tips)return o;}}catch(e){}return null;}
+function migrate(o){const d=DEFAULT();for(const k of ['cfg','aut','acs','rep'])o[k]=Object.assign({},d[k],o[k]||{});return o;}
+S=(()=>{const o=load();return o?migrate(o):DEFAULT();})();
+
+function getK(path){return path.split('.').reduce((o,k)=>o?.[k],S);}
+function setK(path,v){const ks=path.split('.');let o=S;for(let i=0;i<ks.length-1;i++)o=o[ks[i]];o[ks[ks.length-1]]=v;}
+
+// ---------------------------------------------------------------- calcolo UC
+const ucTab=()=>S.cfg.ucTab!=='auto'?S.cfg.ucTab:(S.cfg.dest==='res'?'priv':'pub');
+const uniCurve=()=>S.cfg.uniCurve!=='auto'?S.cfg.uniCurve:(S.cfg.dest==='res'?'res':'uff');
+function totals(counts){ // counts {appId:n}
+  const t={uc:[0,0,0],fx:false,n:0,ga:[0,0,0],gb:[0,0,0],qmax:[0,0,0],qsum:[0,0,0],lu:[0,0,0],lumax:[0,0,0]};
+  const tab=ucTab();
+  for(const [id,nn] of Object.entries(counts)){
+    const a=APP[id],n=num(nn); if(!a||n<=0) continue;
+    t.n+=n; const u=tab==='priv'?a.uPriv:a.uPub;
+    for(let k=0;k<3;k++) t.uc[k]+=n*u[k];
+    if(a.fx) t.fx=true;
+    const q=[a.qa[0],a.qa[1],a.qa[0]+a.qa[1]];
+    [0,1].forEach(k=>{const qq=a.qa[k]; if(qq<=0) return; if(qq<0.5){t.ga[k]+=n*qq;t.ga[2]+=n*qq;} else {t.gb[k]+=n*qq;t.gb[2]+=n*qq;} t.qmax[k]=Math.max(t.qmax[k],qq); t.qmax[2]=Math.max(t.qmax[2],qq); t.qsum[k]+=n*qq; t.qsum[2]+=n*qq;});
+    [0,1].forEach(k=>{const l=a.lu[k]; if(l<=0) return; t.lu[k]+=n*l; t.lu[2]+=n*l; t.lumax[k]=Math.max(t.lumax[k],l); t.lumax[2]=Math.max(t.lumax[2],l);});
+  }
+  return t;
+}
+function addCounts(acc,c,mul){for(const [k,v] of Object.entries(c)){acc[k]=(acc[k]||0)+num(v)*mul;}return acc;}
+// k: 0 AF, 1 AC, 2 Tot
+function qUNI(t,k){
+  if(t.uc[k]<=0) return {v:0,f:''};
+  const fx=k!==1&&t.fx; const key=uniCurve()+(fx?'Flux':'Cas');
+  const r=interp(UNI[key],t.uc[k]); let v=r.v,f=r.f;
+  if(v<t.qmax[k]){v=t.qmax[k];f='portata app. max';}
+  if(v>t.qsum[k]&&t.qsum[k]>0){v=t.qsum[k];f='= Σ portate nominali';}
+  return {v,f,curve:key};
+}
+function qPREN(t,k){
+  const C=prenCurves(S.cfg.dest); const ga=t.ga[k],gb=t.gb[k];
+  if(ga+gb<=0) return {v:0,f:''};
+  let v,f='';
+  if(C.single){const r=interp(C.A,ga+gb);v=r.v;f=r.f;}
+  else{const ra=ga>0?interp(C.A,ga):{v:0,f:''};const rb=gb>0?interp(C.B,gb):{v:0,f:''};v=ra.v+rb.v;f=[ra.f,rb.f].filter(Boolean).join(', ');if(ga>0&&gb>0)f=(f?f+'; ':'')+'Gta+Gtb sommate';}
+  if(v>ga+gb){v=ga+gb;}
+  return {v,f};
+}
+const ENb=L=>0.149*Math.pow(L,0.426);
+function qEN(t,k){
+  const L=t.lu[k],m=t.lumax[k]; if(L<=0) return {v:0,f:''};
+  let v;
+  if(L>=300) v=ENb(L);
+  else if(m<=2) v=Math.min(0.1*L,ENb(L));
+  else{ const q0=0.1*m,q3=ENb(300); if(L<=m) v=0.1*L; else{ const s=Math.log(q3/q0)/Math.log(300/m); v=Math.max(ENb(L),q0*Math.pow(L/m,s)); v=Math.min(v,0.1*L);} }
+  return {v,f:'approssimato'};
+}
+const QF={uni:qUNI,pren:qPREN,en:qEN};
+function qd(t,k,method,cont){const r=QF[method](t,k);const c=cont?(k===2?cont[0]+cont[1]:cont[k]):0;return {v:r.v+c,f:r.f,base:r.v,cont:c};}
+
+// ---------------------------------------------------------------- render 1
+let showAll=false;
+function curTip(){return S.tips.find(t=>t.id===S.sel)||S.tips[0];}
+function renderTips(){
+  $('#tipList').innerHTML=S.tips.map(t=>`<button type="button" class="tipbtn" data-tip="${t.id}" aria-pressed="${t.id===S.sel}">${esc(t.name)} <span class="muted">× ${fmt(num(t.qty),0)}</span></button>`).join('');
+  const t=curTip(); if(!t) return;
+  $('#tip-name').value=t.name; $('#tip-qty').value=t.qty; $('#tip-caf').value=t.cAF; $('#tip-cac').value=t.cAC;
+  renderAppTable();
+}
+function renderAppTable(){
+  const t=curTip(); const tab=ucTab();
+  const list=APPS.filter(a=>showAll||!a.h||num(t.c[a.id])>0);
+  const grp={d:'Apparecchi domestici',c:'Apparecchi collettivi e speciali'};
+  let h=`<thead><tr><th>Apparecchio</th><th class="n">N°</th><th class="n af">UC AF</th><th class="n ac">UC AC</th><th class="n">UC tot</th><th class="n af">q AF</th><th class="n ac">q AC</th><th class="n af">LU AF</th><th class="n ac">LU AC</th></tr></thead><tbody>`;
+  let g='';
+  for(const a of list){
+    if(a.g!==g){g=a.g;h+=`<tr><td colspan="9" class="muted small" style="background:var(--panel);font-weight:600">${grp[g]}</td></tr>`;}
+    const u=tab==='priv'?a.uPriv:a.uPub;
+    h+=`<tr><td>${a.n}${a.fx?' <span class="pill mix" title="attiva la curva a flussometro UNI">fluss.</span>':''}</td><td class="n"><input type="number" class="w-s" min="0" step="1" data-app="${a.id}" value="${num(t.c[a.id])||''}" aria-label="Numero ${esc(a.n)}"></td><td class="n">${u[0]?fmt(u[0]):'–'}</td><td class="n">${u[1]?fmt(u[1]):'–'}</td><td class="n">${fmt(u[2])}</td><td class="n">${fmt(a.qa[0])}</td><td class="n">${a.qa[1]?fmt(a.qa[1]):'–'}</td><td class="n">${a.lu[0]}</td><td class="n">${a.lu[1]||'–'}</td></tr>`;
+  }
+  h+=`<tr class="tot" id="appTot"></tr></tbody>`;
+  $('#appTable').innerHTML=h; updAppTot();
+}
+function updAppTot(){
+  const t=totals(curTip().c);
+  const el=$('#appTot'); if(!el) return;
+  el.innerHTML=`<td>Totale tipologia (${fmt(t.n,0)} app.)</td><td></td><td class="n">${fmt(t.uc[0])}</td><td class="n">${fmt(t.uc[1])}</td><td class="n">${fmt(t.uc[2])}</td><td class="n">${fmt(t.qsum[0])}</td><td class="n">${fmt(t.qsum[1])}</td><td class="n">${t.lu[0]}</td><td class="n">${t.lu[1]}</td>`;
+}
+function cmpTable(t,cont){
+  const M=[['uni','UNI 9182 (UC)'],['pren','prEN 806 (Caleffi)'],['en','EN 806-3 (LU) ≈']];
+  let h=`<thead><tr><th>Metodo</th><th class="n af">AF</th><th class="n ac">AC</th><th class="n">Tot</th></tr></thead><tbody>`;
+  for(const [m,lab] of M){
+    const r=[0,1,2].map(k=>qd(t,k,m,cont));
+    const fl=[...new Set(r.map(x=>x.f).filter(Boolean))].join('; ');
+    h+=`<tr${m===S.cfg.method?' style="font-weight:700"':''}><td>${lab}${m===S.cfg.method?' <span class="pill ok">progetto</span>':''}${fl&&m!=='en'?`<div class="small muted">${esc(fl)}</div>`:''}</td>${r.map(x=>`<td class="n">${fmt(x.v)}</td>`).join('')}</tr>`;
+  }
+  return h+'</tbody>';
+}
+function renderUCOut(){
+  const tp=curTip(); const t=totals(tp.c);
+  $('#tipSumLead').textContent=`${tp.name}: ${fmt(t.n,0)} apparecchi, UC ${fmt(t.uc[2])} (tabella ${ucTab()==='priv'?'abitazioni private':'edifici collettivi'}), ΣLU ${t.lu[2]}, Σq ${fmt(t.qsum[2])} l/s.`;
+  $('#tipCompare').innerHTML=cmpTable(t,[num(tp.cAF),num(tp.cAC)]);
+  const acc={};let cont=[0,0],nt=0;
+  for(const x of S.tips){addCounts(acc,x.c,num(x.qty));cont[0]+=num(x.cAF)*num(x.qty);cont[1]+=num(x.cAC)*num(x.qty);nt+=num(x.qty);}
+  const tb=totals(acc);
+  $('#bldLead').textContent=`${S.tips.map(x=>`${fmt(num(x.qty),0)} × ${x.name}`).join(' + ')} → UC ${fmt(tb.uc[2])}, ΣLU ${tb.lu[2]}, Σq ${fmt(tb.qsum[2])} l/s.`;
+  $('#bldCompare').innerHTML=cmpTable(tb,cont);
+  const q=[0,1].map(k=>['uni','pren','en'].map(m=>qd(tb,k,m,cont).v));
+  const sp=Math.max(...q[0])/Math.max(1e-9,Math.min(...q[0]));
+  $('#bldMsg').innerHTML=sp>1.35?`<div class="msg warn">Lo scarto tra i metodi sull'AF è del ${fmt((sp-1)*100,0)} %. È normale: la prEN 806 e la EN 806-3 nascono da contemporaneità più spinte della UNI 9182. Scegli il metodo in base al riferimento contrattuale del progetto.</div>`:'';
+}
+
+// ---------------------------------------------------------------- render 2 rete
+function matOptions(sel,withDef){return (withDef?`<option value=""${!sel?' selected':''}>default</option>`:'')+MATS.map(m=>`<option value="${m.id}"${m.id===sel?' selected':''}>${m.n}</option>`).join('');}
+function renderHapp(){
+  $('#happTable').innerHTML=`<thead><tr><th></th><th>Componente</th><th class="n">m c.a.</th></tr></thead><tbody>`+S.net.happ.map((h,i)=>`<tr><td><input type="checkbox" data-happ="${i}" data-f="on" ${h.on?'checked':''} aria-label="Includi ${esc(h.n)}"></td><td>${esc(h.n)}</td><td class="n"><input type="number" step="0.5" data-happ="${i}" data-f="v" value="${h.v}" aria-label="Perdita ${esc(h.n)}"></td></tr>`).join('')+'</tbody>';
+}
+function renderNetTable(){
+  const tips=S.tips;
+  let h=`<thead><tr><th>Tratto</th><th>Servizio</th><th class="n">L [m]</th>${tips.map(t=>`<th class="n" title="${esc(t.name)}">${esc(t.name.split('–')[0].trim()).slice(0,14)}</th>`).join('')}<th>Materiale</th><th>Diametro</th><th>Critico</th><th class="n">Q<sub>d</sub> l/s</th><th class="n">d<sub>i</sub> mm</th><th class="n">v m/s</th><th class="n">r mm/m</th><th class="n">ΔP m</th><th>Esito</th><th></th></tr></thead><tbody>`;
+  for(const r of S.net.rows){
+    const mat=MAT[r.mat||S.net.mat];
+    h+=`<tr data-row="${r.id}"><td><input type="text" class="w-l" data-rf="name" value="${esc(r.name)}" aria-label="Nome tratto"></td>
+    <td><select data-rf="svc" aria-label="Servizio"><option value="AF"${r.svc==='AF'?' selected':''}>AF</option><option value="AC"${r.svc==='AC'?' selected':''}>AC</option><option value="AFAC"${r.svc==='AFAC'?' selected':''}>AF+AC</option></select></td>
+    <td class="n"><input type="number" class="w-s" step="0.5" min="0" data-rf="L" value="${r.L}" aria-label="Lunghezza"></td>
+    ${tips.map(t=>`<td class="n"><input type="number" class="w-s" min="0" step="1" data-rt="${t.id}" value="${num(r.c[t.id])||''}" aria-label="N° ${esc(t.name)}"></td>`).join('')}
+    <td><select data-rf="mat" aria-label="Materiale">${matOptions(r.mat,true)}</select></td>
+    <td><select data-rf="size" aria-label="Diametro"><option value="auto">auto</option>${mat.s.map((s,i)=>`<option value="${i}"${String(r.size)===String(i)?' selected':''}>${s[0]}</option>`).join('')}</select></td>
+    <td style="text-align:center"><input type="checkbox" data-rf="crit" ${r.crit?'checked':''} aria-label="Percorso critico"></td>
+    <td class="n" data-o="q"></td><td class="n" data-o="d"></td><td class="n" data-o="v"></td><td class="n" data-o="r"></td><td class="n" data-o="p"></td><td data-o="e"></td>
+    <td><button type="button" class="btn sm ghost" data-del="${r.id}" aria-label="Elimina tratto">×</button></td></tr>`;
+  }
+  h+=`</tbody>`;
+  $('#netTable').innerHTML=h;
+}
+function calcNet(){
+  const N=S.net,cfg=S.cfg,F=Math.max(.1,num(N.F));
+  const happAF=N.happ.filter(h=>h.on&&!h.ac).reduce((s,h)=>s+num(h.v),0);
+  const happAC=happAF+N.happ.filter(h=>h.on&&h.ac).reduce((s,h)=>s+num(h.v),0);
+  let LAF=0,LAC=0;
+  for(const r of N.rows){if(!r.crit)continue; if(r.svc!=='AC')LAF+=num(r.L); if(r.svc!=='AF')LAC+=num(r.L);}
+  const base=num(N.Ppr)-num(N.dh)-num(N.pmin);
+  const JAF=LAF>0?(base-happAF)*F*1000/LAF:NaN, JAC=LAC>0?(base-happAC)*F*1000/LAC:NaN;
+  const res=[];
+  let dpAF=0,dpAC=0,qOrigAF=0,qOrigAC=0;
+  for(const r of N.rows){
+    const acc={},cont=[0,0];
+    for(const t of S.tips){const n=num(r.c[t.id]);if(n>0){addCounts(acc,t.c,n);cont[0]+=num(t.cAF)*n;cont[1]+=num(t.cAC)*n;}}
+    const t=totals(acc); const k=r.svc==='AF'?0:r.svc==='AC'?1:2;
+    const q=qd(t,k,cfg.method,cont);
+    const T=k===1?num(cfg.tAC):num(cfg.tAF);
+    const J=k===0?JAF:k===1?JAC:Math.min(isFinite(JAF)?JAF:1e9,isFinite(JAC)?JAC:1e9);
+    const mat=MAT[r.mat||N.mat];
+    const vlim=i=>{let v=vTab9(mat,i,cfg.imp);if(num(cfg.vcap)>0)v=Math.min(v,num(cfg.vcap));return v;};
+    let pick=null;
+    const evalI=i=>{const di=mat.s[i][2];const v=q.v/1000/(Math.PI*di*di/4e6);const rr=rLoss(mat.r,q.v,di,T);return {i,di,v,r:rr,vl:vlim(i)};};
+    if(q.v>0){
+      if(r.size!=='auto'&&mat.s[+r.size]) pick=evalI(+r.size);
+      else{ for(let i=0;i<mat.s.length;i++){const e=evalI(i); if(e.v<=e.vl&&(N.mode!=='J'||!isFinite(J)||J<=0||e.r<=J)){pick=e;break;}} if(!pick){pick=evalI(mat.s.length-1);pick.over=1;} }
+    }
+    const dp=pick?pick.r*num(r.L)/(1000*F):0;
+    if(r.crit){if(k!==1)dpAF+=dp;if(k!==0)dpAC+=dp;}
+    if(k!==1)qOrigAF=Math.max(qOrigAF,k===2?qd(t,0,cfg.method,cont).v:q.v);
+    if(k!==0)qOrigAC=Math.max(qOrigAC,k===2?qd(t,1,cfg.method,cont).v:q.v);
+    let e='ok',why='';
+    if(pick){
+      if(pick.over){e='bad';why='nessun diametro della serie rispetta i limiti';}
+      else if(pick.v>pick.vl+1e-9){e='bad';why=`v > ${fmt(pick.vl,1)} m/s`;}
+      else if(N.mode==='J'&&isFinite(J)&&J>0&&pick.r>J+1e-9){e='warn';why='r > J disponibile';}
+    }
+    res.push({id:r.id,k,q,t,mat,pick,dp,e,why});
+  }
+  const resAF=num(N.Ppr)-num(N.dh)-happAF-dpAF, resAC=num(N.Ppr)-num(N.dh)-happAC-dpAC;
+  return {happAF,happAC,LAF,LAC,JAF,JAC,res,dpAF,dpAC,resAF,resAC,qOrigAF,qOrigAC,
+    pminReqAF:num(N.dh)+num(N.pmin)+happAF+dpAF, pminReqAC:num(N.dh)+num(N.pmin)+happAC+dpAC};
+}
+function pillFor(e,txt){return `<span class="pill ${e}">${txt}</span>`;}
+function renderNetOut(){
+  const R=calcNet(),N=S.net;
+  for(const x of R.res){
+    const tr=document.querySelector(`tr[data-row="${x.id}"]`); if(!tr) continue;
+    const o=k=>tr.querySelector(`[data-o="${k}"]`);
+    o('q').innerHTML=`<span class="${x.k===0?'af':x.k===1?'ac':''}">${fmt(x.q.v)}</span>`;
+    if(x.pick){o('d').textContent=`${x.mat.s[x.pick.i][0]} · ${fmt(x.pick.di,1)}`;o('v').textContent=fmt(x.pick.v);o('r').textContent=fmt(x.pick.r,1);o('p').textContent=fmt(x.dp);}
+    else{['d','v','r','p'].forEach(k=>o(k).textContent='–');}
+    o('e').innerHTML=x.pick?(x.e==='ok'?pillFor('ok','ok'):pillFor(x.e,esc(x.why))):'<span class="muted small">nessuna utenza</span>';
+    o('q').title=x.q.f||'';
+  }
+  const jp=J=>!isFinite(J)?'warn':J<20?'bad':J<25?'warn':J>120?'warn':'ok';
+  $('#netKpi').innerHTML=[
+    ['hl','J disponibile AF',fmt(R.JAF,1),'mm/m'],['hl','J disponibile AC',fmt(R.JAC,1),'mm/m'],
+    ['af','Q<sub>d</sub> origine AF',fmt(R.qOrigAF),'l/s'],['ac','Q<sub>d</sub> origine AC',fmt(R.qOrigAC),'l/s'],
+    ['af','Pressione residua AF',fmt(R.resAF,1),'m c.a.'],['ac','Pressione residua AC',fmt(R.resAC,1),'m c.a.'],
+    ['','L critica AF / AC',`${fmt(R.LAF,0)} / ${fmt(R.LAC,0)}`,'m'],['','H<sub>app</sub> AF / AC',`${fmt(R.happAF,1)} / ${fmt(R.happAC,1)}`,'m']
+  ].map(([c,l,v,u])=>`<div class="kpi ${c}"><div class="l">${l}</div><div class="v">${v}<span class="u">${u}</span></div></div>`).join('');
+  const m=[];
+  for(const [lab,J,res,req] of [['AF',R.JAF,R.resAF,R.pminReqAF],['AC',R.JAC,R.resAC,R.pminReqAC]]){
+    if(!isFinite(J)){m.push(`<div class="msg warn">Nessun tratto ${lab} marcato come critico: J non calcolabile.</div>`);continue;}
+    if(J<=0) m.push(`<div class="msg bad"><b>${lab}:</b> la pressione di progetto non copre dislivello, P<sub>min</sub> e componenti. Serve una sopraelevazione con P<sub>min</sub> ≥ ${fmt(req,1)} m c.a. (vedi scheda 3).</div>`);
+    else if(J<20) m.push(`<div class="msg bad"><b>${lab}:</b> J = ${fmt(J,1)} mm/m &lt; 20÷25: pressione bassa, diametri grandi. Valuta la sopraelevazione.</div>`);
+    else if(J>120) m.push(`<div class="msg warn"><b>${lab}:</b> J = ${fmt(J,1)} mm/m &gt; 110÷120: pressione alta, valuta un riduttore di pressione.</div>`);
+    if(res<num(S.net.pmin)-0.05) m.push(`<div class="msg bad"><b>${lab}:</b> pressione residua all'apparecchio più sfavorito ${fmt(res,1)} m c.a. &lt; P<sub>min</sub> ${fmt(num(S.net.pmin),1)} m c.a. con i diametri scelti.</div>`);
+    else if(isFinite(J)&&J>0) m.push(`<div class="msg ok"><b>${lab}:</b> pressione residua ${fmt(res,1)} m c.a. ≥ P<sub>min</sub> (margine ${fmt(res-num(S.net.pmin),1)} m).</div>`);
+  }
+  if(num(S.net.Ppr)>50) m.push(`<div class="msg warn">P<sub>pr</sub> &gt; 50 m c.a.: ai rubinetti più bassi la pressione statica supera il limite consigliato (EN 806: 500 kPa). Prevedi un riduttore.</div>`);
+  $('#netMsg').innerHTML=m.join('');
+  return R;
+}
+
+// ---------------------------------------------------------------- 3 autoclave
+const aFromW=W=>W<3?30:W<5?25:W<7?20:W<10?15:10;
+function calcAut(){
+  const A=S.aut; const G=num(A.G),pmin=num(A.pmin),pmax=pmin+num(A.dp);
+  const pm=num(A.pacq)-num(A.l1)-num(A.l2)-num(A.l3);
+  const np=Math.max(1,Math.round(num(A.np)));
+  const Gp=G/np, H=pmax-pm;
+  const W=H>0?(Gp*3.6*H)/(367*Math.max(.1,num(A.eta))):0;
+  const a=A.amode==='man'?Math.max(1,num(A.a)):aFromW(W);
+  const k=(pmax+10)/Math.max(.01,pmax-pmin);
+  const V1=30*G*60/a*k, V2=6*G*60/a*k;
+  const P=A.pset===''||A.pset==null?pmax:num(A.pset);
+  const V3=0.2*G*(P+60);
+  return {G,pmin,pmax,pm,np,Gp,H,W,a,V1,V2,V3,P,air:0.2*V1};
+}
+// ---------------------------------------------------------------- cataloghi Cordivari
+// modelli: [nominale l, volume lordo l (null = nominale), superficie serpentino m²]
+const CAT={
+ acs:{
+  st:{n:'BOLLY® 1 ST FB',d:'1 serpentino fisso – caldaia, teleriscaldamento',m:[[150,148,.6],[200,189,.8],[300,291,1.2],[400,422,1.5],[500,498,1.8],[800,789,2.7],[1000,1038,3.5],[1500,1443,3.8]]},
+  xl:{n:'BOLLY® 1 XL',d:'serpentino maggiorato – pompa di calore',m:[[200,null,2],[300,null,3.4],[400,null,4.4],[500,null,5.4],[800,789,6],[1000,1038,6.5],[1500,1438,7.7]]},
+  ex:{n:'EXTRA 1 WX',d:'scambiatore estraibile – grandi volumi',m:[[200,191,.5],[300,292,.75],[500,500,1],[800,794,1.5],[1000,1042,2],[1500,1445,3],[2000,1978,4],[2500,2315,5],[3000,2921,6],[4000,3769,8],[5000,null,10]]}
+ },
+ air:{
+  Z:{n:'Autoclave zincata Z PED VT',s:[{ps:8,m:[100,200,300,500,750,1000,1500,2000,2500,3000,4000,5000,8000,10000]},{ps:11.76,m:[100,200,300,500,750,1000,1500,2000,2500,3000,4000,5000,8000,10000]}]},
+  X:{n:'Autoclave inox 316L X PED VT',s:[{ps:8,m:[100,200,300,500,750,1000,1500,2000,3000,4000,5000]}]}
+ },
+ memb:{n:'Vaso a membrana V/Z PED',ps:10,m:[24,50,80,100,200,300,500]},
+ ris:{
+  zn:{n:'Serbatoio zincato verticale',m:[[125,134],[200,207],[300,316],[500,463],[750,747],[1000,958],[1500,1568],[2000,2054],[3000,3074],[4000,3854],[5000,4830],[6000,5822],[8000,7850],[10000,9847],[15000,13985]]},
+  ix:{n:'Serbatoio inox 304 verticale',m:[[125,134],[200,207],[300,316],[500,463],[750,747],[1000,958],[1500,1568],[2000,2054],[3000,3074],[4000,3854],[5000,4830],[6000,5822],[8000,7850],[10000,9847]]},
+  pe:{n:'Serbatoio in polietilene VT',m:[[100,100],[200,200],[350,350],[500,500],[1000,1000],[1500,1500],[2100,2100],[3300,3300],[5300,5300]]}
+ }
+};
+// sceglie n × modello: minimo numero di pezzi, poi minimo volume; tol = scarto ammesso sotto il calcolo
+function pickCat(V,models,o={}){
+  const maxN=o.maxN||4,tol=(o.tol??0)/100;
+  if(!(V>0)) return null;
+  for(let n=1;n<=maxN;n++){
+    for(const mm of models){
+      const nom=Array.isArray(mm)?mm[0]:mm, vol=Array.isArray(mm)?(mm[1]??mm[0]):mm, Sx=Array.isArray(mm)?mm[2]:null;
+      if(n*vol<V*(1-tol)) continue;
+      if(o.Sreq>0&&Sx!=null&&n*Sx<o.Sreq) continue;
+      return {n,nom,vol:n*vol,S:Sx!=null?n*Sx:null,under:n*vol<V};
+    }
+  }
+  return null;
+}
+const lab=p=>p?`${p.n>1?p.n+' × ':''}${fmt(p.nom,0)} l`:'fuori gamma';
+function renderAut(){
+  const R=calcAut();
+  $('#autKpi').innerHTML=[
+    ['hl','P<sub>max</sub>',fmt(R.pmax,1),'m c.a.'],['','Pressione a monte pompe',fmt(R.pm,1),'m c.a.'],
+    ['hl','Prevalenza H',fmt(R.H,1),'m c.a.'],['','Portata per pompa',fmt(R.Gp*3.6,2),'m³/h'],
+    ['hl','Potenza per pompa',fmt(R.W,2),'kW'],['','Avviamenti a',fmt(R.a,0),'h⁻¹']
+  ].map(([c,l,v,u])=>`<div class="kpi ${c}"><div class="l">${l}</div><div class="v">${v}<span class="u">${u}</span></div></div>`).join('');
+  const tol=num(S.cfg.tol);
+  const pbar=R.pmax/10.2, need=pbar*1.1; // PS ≥ Pmax + ~10 % per la taratura della valvola di sicurezza
+  const fam=CAT.air[S.aut.cat]||CAT.air.Z;
+  const ser=fam.s.find(s=>s.ps>=need);
+  const pA=ser?pickCat(R.V1,ser.m,{maxN:2,tol}):null;
+  const memOK=CAT.memb.ps>=need;
+  const pM=memOK?pickCat(R.V2,CAT.memb.m,{maxN:8,tol}):null;
+  const pI=CAT.memb.ps>=(R.P/10.2)*1.1?pickCat(R.V3,CAT.memb.m,{maxN:8,tol}):null;
+  const cell=(p,name,ps)=>p?`<b>${lab(p)}</b><div class="small muted">${name} · PS ${fmt(ps,ps%1?2:0)} bar${p.under?' · <span class="pill warn">sotto calcolo, entro tolleranza</span>':''}</div>`:`<span class="pill bad">fuori gamma</span>`;
+  $('#autTable').innerHTML=`<thead><tr><th>Sistema</th><th class="n">V calcolato</th><th>Taglia Cordivari</th><th>Note</th></tr></thead><tbody>
+   <tr><td>Pompe a velocità costante + autoclave a cuscino d'aria</td><td class="n">${fmt(R.V1,0)} l</td><td>${cell(pA,fam.n,ser?.ps??0)}</td><td class="small">compressore per ≈ ${fmt(R.air,0)} l d'aria; recipiente PED soggetto a verifiche periodiche</td></tr>
+   <tr><td>Pompe a velocità costante + autoclave a membrana</td><td class="n">${fmt(R.V2,0)} l</td><td>${cell(pM,CAT.memb.n,10)}</td><td class="small">precarica ≈ 90 % di P<sub>min</sub> = ${fmt(.9*R.pmin/10.2,1)} bar</td></tr>
+   <tr><td>Pompe a velocità variabile + vaso a membrana</td><td class="n">${fmt(R.V3,0)} l</td><td>${cell(pI,CAT.memb.n,10)}</td><td class="small">precarica ≈ 0,7 × P set = ${fmt(.7*R.P/10.2,1)} bar</td></tr></tbody>`;
+  R.pick={pA,pM,pI,fam:fam.n,ps:ser?.ps};
+  const m=[];
+  if(!ser) m.push(`<div class="msg bad">P<sub>max</sub> ${fmt(pbar,1)} bar: oltre la pressione di esercizio delle autoclavi a catalogo (con margine per la valvola di sicurezza). Serve una serie su misura o una suddivisione in zone.</div>`);
+  else if(ser.ps>8) m.push(`<div class="msg info">P<sub>max</sub> ${fmt(pbar,1)} bar: serve la serie zincata 11,76/12 bar, non la 8 bar.</div>`);
+  if(!memOK) m.push(`<div class="msg bad">I vasi a membrana a catalogo sono PS 10 bar: insufficienti per P<sub>max</sub> ${fmt(pbar,1)} bar.</div>`);
+  if(pM&&pM.n>2) m.push(`<div class="msg warn">Membrana: ${pM.n} vasi in batteria. Oltre 2–3 vasi conviene valutare il cuscino d'aria o le pompe a inverter.</div>`);
+  renderRis(R);
+  if(R.H<=0) m.push(`<div class="msg ok">La pressione a monte (${fmt(R.pm,1)} m c.a.) supera già P<sub>max</sub>: la sopraelevazione non serve.</div>`);
+  if(R.pmax>60) m.push(`<div class="msg warn">P<sub>max</sub> ${fmt(R.pmax,0)} m c.a.: ai piani bassi la statica supera 50 m c.a. Valuta zone di pressione o riduttori di piano.</div>`);
+  if(num(S.aut.dp)<10) m.push(`<div class="msg warn">Differenziale inferiore a 10 m c.a.: volumi elevati e pendolamento della pompa.</div>`);
+  $('#autMsg').innerHTML=m.join('');
+}
+function calcRis(){
+  const A=S.aut; const Cg=num(A.rab)*num(A.rdot);
+  const V1=Cg*num(A.rh)/24, V2=num(A.G)*60*num(A.rmin);
+  const V=Math.max(V1,V2); const fam=CAT.ris[A.rfam]||CAT.ris.zn;
+  return {Cg,V1,V2,V,fam,p:pickCat(V,fam.m,{maxN:4,tol:num(S.cfg.tol)})};
+}
+function renderRis(){
+  const R=calcRis();
+  $('#risKpi').innerHTML=[['','Consumo giornaliero',fmt(R.Cg/1000,1),'m³/g'],['','Volume per autonomia',fmt(R.V1,0),'l'],['','Volume per punta',fmt(R.V2,0),'l'],['hl','Volume di progetto',fmt(R.V,0),'l']].map(([c,l,v,u])=>`<div class="kpi ${c}"><div class="l">${l}</div><div class="v">${v}<span class="u">${u}</span></div></div>`).join('');
+  $('#risOut').innerHTML=R.p?`<div class="msg ok">Proposta: <b>${lab(R.p)}</b> ${esc(R.fam.n)} — volume lordo ${fmt(R.p.vol,0)} l${R.p.n>1?' (serbatoi collegati in parallelo)':''}.</div>`:`<div class="msg bad">Volume oltre la gamma: oltre 4 serbatoi conviene una vasca o un serbatoio su misura.</div>`;
+}
+
+// ---------------------------------------------------------------- 4 ACS
+function calcACS(tprOver){
+  const A=S.acs,tf=num(A.tf),ta=num(A.ta);
+  const nRes=A.rows.filter(r=>ACSP[r.key]?.res).reduce((s,r)=>s+num(r.qty),0);
+  const Fres=nRes>0?resF(nRes):1;
+  let C=0,Qt=0,Qh=0,V=0;const rows=[];
+  for(const r of A.rows){
+    const F=ACSP[r.key]?.res?Fres:1;
+    const c=num(r.qty)*num(r.l)*F; const qt=c*(num(r.tu)-tf);
+    const tpr=tprOver??num(r.tpr), tpu=num(r.tpu);
+    const qh=qt/Math.max(.05,tpr+tpu); const v=qh*tpr/Math.max(1,ta-tf);
+    rows.push({id:r.id,F,c,qt,qh,v}); C+=c;Qt+=qt;Qh+=qh;V+=v;
+  }
+  const fu=Math.max(10,num(A.fu))/100; const Vc=V/fu;
+  const tm1=num(A.tmand)-num(A.dt)/2, tm2=(ta+tf)/2;
+  const S2=tm1>tm2?Qh/(num(A.k)*(tm1-tm2)):NaN;
+  return {Fres,nRes,C,Qt,Qh,V,Vc,rows,tm1,tm2,S:S2,kW:Qh/860};
+}
+function calcACSPick(R){
+  const A=S.acs; const tol=num(S.cfg.tol); const maxN=Math.max(1,Math.round(num(A.maxn)||3));
+  const Sreq=String(A.chkS)==='1'&&isFinite(R.S)?R.S:0;
+  const all=['st','xl','ex'].map(k=>({k,p:pickCat(R.Vc,CAT.acs[k].m,{maxN,tol,Sreq})}));
+  let fam=A.fam;
+  if(fam==='auto'){
+    const pdc=num(A.tmand)-num(A.dt)/2<60;
+    const order=pdc?['xl','ex','st']:(R.Vc>1500?['ex','st','xl']:['st','ex','xl']);
+    fam=order.find(k=>{const p=all.find(x=>x.k===k).p;return p&&(k!=='ex'||p.n===1||R.Vc>1500);})||order[0];
+    // tra ST/XL multipli e un EXTRA singolo preferisci il singolo
+    const cur=all.find(x=>x.k===fam).p, ex=all.find(x=>x.k==='ex').p;
+    if(cur&&cur.n>1&&ex&&ex.n===1&&!pdc) fam='ex';
+  }
+  return {fam,all};
+}
+function renderACSTable(){
+  const opts=Object.entries(ACSP).map(([k,p])=>`<option value="${k}">${esc(p.n)}</option>`).join('');
+  $('#acsPreset').innerHTML=opts;
+  $('#acsTable').innerHTML=`<thead><tr><th>Utenza</th><th class="n">Quantità</th><th>Unità</th><th class="n">l / unità</th><th class="n">t<sub>u</sub> °C</th><th class="n">t<sub>pu</sub> h</th><th class="n">t<sub>pr</sub> h</th><th class="n">F</th><th class="n">C punta l</th><th class="n">Q<sub>h</sub> kW</th><th class="n">V l</th><th></th></tr></thead><tbody>`+
+  S.acs.rows.map(r=>`<tr data-hrow="${r.id}"><td><input type="text" class="w-l" data-hf="name" value="${esc(r.name)}" aria-label="Nome utenza"></td>
+   <td class="n"><input type="number" class="w-s" min="0" step="1" data-hf="qty" value="${r.qty}" aria-label="Quantità"></td><td class="small muted">${esc(ACSP[r.key]?.u||'')}</td>
+   <td class="n"><input type="number" class="w-s" step="1" data-hf="l" value="${r.l}" aria-label="Litri per unità"></td>
+   <td class="n"><input type="number" class="w-s" step="1" data-hf="tu" value="${r.tu}" aria-label="Temperatura di utilizzo"></td>
+   <td class="n"><input type="number" class="w-s" step="0.1" data-hf="tpu" value="${r.tpu}" aria-label="Periodo di punta"></td>
+   <td class="n"><input type="number" class="w-s" step="0.5" data-hf="tpr" value="${r.tpr}" aria-label="Preriscaldamento"></td>
+   <td class="n" data-ho="F"></td><td class="n" data-ho="c"></td><td class="n" data-ho="q"></td><td class="n" data-ho="v"></td>
+   <td><button type="button" class="btn sm ghost" data-hdel="${r.id}" aria-label="Elimina utenza">×</button></td></tr>`).join('')+`<tr class="tot" id="acsTot"></tr></tbody>`;
+}
+function renderACSOut(){
+  const R=calcACS(),A=S.acs;
+  for(const x of R.rows){const tr=document.querySelector(`tr[data-hrow="${x.id}"]`);if(!tr)continue;const o=k=>tr.querySelector(`[data-ho="${k}"]`);o('F').textContent=fmt(x.F);o('c').textContent=fmt(x.c,0);o('q').textContent=fmt(x.qh/860,1);o('v').textContent=fmt(x.v,0);}
+  const tot=$('#acsTot'); if(tot) tot.innerHTML=`<td colspan="8">Totale</td><td class="n">${fmt(R.C,0)}</td><td class="n">${fmt(R.kW,1)}</td><td class="n">${fmt(R.V,0)}</td><td></td>`;
+  $('#acsKpi').innerHTML=[
+    ['ac','Volume accumulo',fmt(R.Vc,0),'l'],['ac','Potenza scambiatore',fmt(R.kW,1),'kW'],
+    ['','Consumo nel periodo di punta',fmt(R.C,0),'l'],['','Calore totale Q<sub>t</sub>',fmt(R.Qt/860,1),'kWh'],
+    ['','Q<sub>h</sub> (sistema tecnico)',fmt(R.Qh,0),'kcal/h'],['hl','Superficie serpentino',isFinite(R.S)?fmt(R.S,2):'–','m²']
+  ].map(([c,l,v,u])=>`<div class="kpi ${c}"><div class="l">${l}</div><div class="v">${v}<span class="u">${u}</span></div></div>`).join('');
+  const m=[];
+  if(R.nRes>0) m.push(`<div class="msg info">Contemporaneità residenziale Caleffi Tab. 2: ${fmt(R.nRes,0)} alloggi → F = ${fmt(R.Fres)}.</div>`);
+  if(num(A.ta)<60) m.push(`<div class="msg warn">Accumulo a ${fmt(num(A.ta),0)} °C: sotto i 60 °C delle Linee guida legionellosi. Prevedi un ciclo antilegionella periodico o un post-riscaldamento.</div>`);
+  if(!(R.tm1>R.tm2+5)) m.push(`<div class="msg bad">Temperatura media del fluido scaldante (${fmt(R.tm1,1)} °C) troppo vicina a quella dell'acqua riscaldata (${fmt(R.tm2,1)} °C): la superficie di scambio diverge. Alza la mandata o abbassa t<sub>a</sub>.</div>`);
+  if(A.rows.some(r=>num(r.tu)>num(A.ta))) m.push(`<div class="msg bad">Una o più utenze hanno t<sub>u</sub> superiore alla temperatura di accumulo: il bollitore non può fornirla.</div>`);
+  $('#acsMsg').innerHTML=m.join('');
+  const P=calcACSPick(R);
+  const rowsC=P.all.map(x=>{const f=CAT.acs[x.k];const p=x.p;
+    const okS=!p||p.S==null||!isFinite(R.S)?'':(p.S>=R.S?'<span class="pill ok">S ok</span>':'<span class="pill warn">S insuff.</span>');
+    return `<tr${x.k===P.fam?' style="font-weight:700"':''}><td>${f.n}<div class="small muted" style="font-weight:400">${f.d}</div></td><td>${p?lab(p):'<span class="pill bad">fuori gamma</span>'}</td><td class="n">${p?fmt(p.vol,0):'–'}</td><td class="n">${p&&p.S!=null?fmt(p.S,1):'–'}</td><td>${okS}${x.k===P.fam?' <span class="pill ok">proposta</span>':''}</td></tr>`;}).join('');
+  const best=P.all.find(x=>x.k===P.fam)?.p;
+  let notes=[];
+  if(best&&best.n>1) notes.push(`${best.n} bollitori uguali: collegamento in serie lato sanitario (migliore stratificazione) o in parallelo con circuiti a ritorno inverso.`);
+  if(P.fam==='ex') notes.push('EXTRA con scambiatore estraibile tradizionale: secondo Cordivari il 9÷17 % del volume resta non riscaldato. Valuta il volume utile all\'85 % o la versione con Serpentina Antilegionella®.');
+  if(best&&best.under) notes.push('Taglia leggermente inferiore al calcolo, entro la tolleranza impostata nella scheda 3.');
+  if(P.fam==='xl') notes.push('Con pompa di calore verifica la potenza scambiabile del serpentino alla temperatura di mandata reale sulle tabelle prestazionali Cordivari.');
+  $('#acsSizes').innerHTML=`<div class="tw"><table><thead><tr><th>Famiglia</th><th>Configurazione</th><th class="n">V lordo l</th><th class="n">S serp. m²</th><th></th></tr></thead><tbody>${rowsC}</tbody></table></div>`+(notes.length?`<ul style="margin:8px 0 0;padding-left:18px">${notes.map(n=>`<li>${n}</li>`).join('')}</ul>`:'')+`<p class="muted" style="margin:6px 0 0">Superficie richiesta con k Caleffi: ${isFinite(R.S)?fmt(R.S,2):'–'} m². Volumi lordi da catalogo; dove manca il dato si usa il nominale.</p>`;
+  renderChart();
+  const Gi=num(A.Gi),qi=Gi*3600*(num(A.tui)-num(A.tf));
+  $('#instKpi').innerHTML=[['ac','Potenza istantanea',fmt(qi/860,0),'kW'],['','Rapporto con accumulo',R.kW>0?fmt(qi/860/R.kW,1):'–','×']].map(([c,l,v,u])=>`<div class="kpi ${c}"><div class="l">${l}</div><div class="v">${v}<span class="u">${u}</span></div></div>`).join('');
+}
+function renderChart(){
+  const pts=[];for(let t=.5;t<=8.001;t+=.25){const r=calcACS(t);pts.push([r.Vc,r.kW]);}
+  const cur=calcACS();
+  const W=640,H=260,ml=54,mr=14,mt=12,mb=36;
+  const xs=pts.map(p=>p[0]).concat(cur.Vc),ys=pts.map(p=>p[1]).concat(cur.kW);
+  const nice=v=>{const e=Math.pow(10,Math.floor(Math.log10(v||1)));const f=v/e;return (f<=1?1:f<=2?2:f<=5?5:10)*e;};
+  const xM=nice(Math.max(...xs)*1.05),yM=nice(Math.max(...ys)*1.05);
+  const X=v=>ml+(W-ml-mr)*v/xM,Y=v=>H-mb-(H-mt-mb)*v/yM;
+  let g='';for(let i=0;i<=5;i++){const xv=xM*i/5,yv=yM*i/5;g+=`<line class="gridline" x1="${X(xv)}" x2="${X(xv)}" y1="${mt}" y2="${H-mb}"/><text x="${X(xv)}" y="${H-mb+15}" text-anchor="middle">${fmt(xv,0)}</text><line class="gridline" x1="${ml}" x2="${W-mr}" y1="${Y(yv)}" y2="${Y(yv)}"/><text x="${ml-6}" y="${Y(yv)+4}" text-anchor="end">${fmt(yv,0)}</text>`;}
+  const path=pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join(' ');
+  $('#acsChart').innerHTML=`<div class="tw" style="border:0"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:420px;display:block" role="img" aria-label="Curva volume potenza">${g}<line class="axis" x1="${ml}" x2="${W-mr}" y1="${H-mb}" y2="${H-mb}"/><line class="axis" x1="${ml}" x2="${ml}" y1="${mt}" y2="${H-mb}"/><path class="crv" d="${path}"/><circle class="dot" cx="${X(cur.Vc)}" cy="${Y(cur.kW)}" r="5"/><text x="${(ml+W-mr)/2}" y="${H-4}" text-anchor="middle">volume accumulo [l]</text><text x="12" y="${(mt+H-mb)/2}" text-anchor="middle" transform="rotate(-90 12 ${(mt+H-mb)/2})">potenza [kW]</text></svg></div>`;
+}
+
+// ---------------------------------------------------------------- 5 riepilogo
+function renderRep(){
+  const N=calcNet(),A=calcAut(),H=calcACS(),RS=calcRis();
+  {const tol=num(S.cfg.tol),need=A.pmax/10.2*1.1,fam=CAT.air[S.aut.cat]||CAT.air.Z,ser=fam.s.find(x=>x.ps>=need);A.pick={pA:ser?pickCat(A.V1,ser.m,{maxN:2,tol}):null,pM:CAT.memb.ps>=need?pickCat(A.V2,CAT.memb.m,{maxN:8,tol}):null,pI:pickCat(A.V3,CAT.memb.m,{maxN:8,tol}),fam:fam.n,ps:ser?.ps};}
+  const HPx=calcACSPick(H),HP={fam:HPx.fam,p:HPx.all.find(x=>x.k===HPx.fam).p};
+  const mlab={uni:'UNI 9182 – unità di carico',pren:'prEN 806 – portate totali (Quaderno Caleffi)',en:'EN 806-3 – loading units (approssimato)'}[S.cfg.method];
+  const dlab=$('#cfg-dest').selectedOptions[0].textContent;
+  const rows=N.res.map(x=>{const r=S.net.rows.find(y=>y.id===x.id);return `<tr><td>${esc(r.name)}</td><td>${r.svc==='AFAC'?'AF+AC':r.svc}</td><td class="n">${fmt(num(r.L),1)}</td><td class="n">${fmt(x.q.v)}</td><td>${x.pick?esc(x.mat.n)+' '+x.mat.s[x.pick.i][0]:'–'}</td><td class="n">${x.pick?fmt(x.pick.v):'–'}</td><td class="n">${x.pick?fmt(x.pick.r,1):'–'}</td><td class="n">${fmt(x.dp)}</td><td>${r.crit?'●':''}</td></tr>`;}).join('');
+  const acsRows=H.rows.map((x,i)=>{const r=S.acs.rows[i];return `<tr><td>${esc(r.name)}</td><td class="n">${fmt(num(r.qty),0)}</td><td class="n">${fmt(x.c,0)}</td><td class="n">${fmt(num(r.tpu),1)} / ${fmt(num(r.tpr),1)}</td><td class="n">${fmt(x.qh/860,1)}</td><td class="n">${fmt(x.v,0)}</td></tr>`;}).join('');
+  $('#repBody').innerHTML=`
+  <p class="small muted">${esc(S.rep.prj)}${S.rep.aut?' — '+esc(S.rep.aut):''} · ${new Date().toLocaleDateString('it-IT')}</p>
+  <h3>Criteri</h3>
+  <p>Destinazione: <b>${esc(dlab)}</b>. Metodo portate: <b>${mlab}</b>. Tabella UC: ${ucTab()==='priv'?'abitazioni private':'edifici collettivi'}. Diametri: ${S.net.mode==='J'?'carico unitario lineare e velocità massima':'velocità massima'} (impianto tipo ${S.cfg.imp}${num(S.cfg.vcap)>0?`, v ≤ ${fmt(num(S.cfg.vcap),1)} m/s`:''}). T AF ${S.cfg.tAF} °C, T AC ${S.cfg.tAC} °C.</p>
+  <h3>Tipologie</h3>
+  <div class="tw"><table><thead><tr><th>Tipologia</th><th class="n">N°</th><th>Apparecchi</th></tr></thead><tbody>${S.tips.map(t=>`<tr><td>${esc(t.name)}</td><td class="n">${fmt(num(t.qty),0)}</td><td class="small">${Object.entries(t.c).filter(([k,v])=>num(v)>0&&APP[k]).map(([k,v])=>`${num(v)} ${APP[k].n.toLowerCase()}`).join(', ')}</td></tr>`).join('')}</tbody></table></div>
+  <h3>Rete di distribuzione</h3>
+  <p>P<sub>pr</sub> ${fmt(num(S.net.Ppr),1)} m c.a.; Δh ${fmt(num(S.net.dh),1)} m; P<sub>min</sub> ${fmt(num(S.net.pmin),1)} m c.a.; H<sub>app</sub> AF/AC ${fmt(N.happAF,1)}/${fmt(N.happAC,1)} m c.a.; F ${fmt(num(S.net.F))}. J disponibile AF ${fmt(N.JAF,1)} mm/m, AC ${fmt(N.JAC,1)} mm/m. Pressione residua all'apparecchio più sfavorito: AF ${fmt(N.resAF,1)} m c.a., AC ${fmt(N.resAC,1)} m c.a.</p>
+  <div class="tw"><table><thead><tr><th>Tratto</th><th>Serv.</th><th class="n">L m</th><th class="n">Q<sub>d</sub> l/s</th><th>Tubo</th><th class="n">v m/s</th><th class="n">r mm/m</th><th class="n">ΔP m</th><th>Crit.</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <h3>Sopraelevazione</h3>
+  <p>G<sub>pr</sub> ${fmt(A.G)} l/s; P<sub>min</sub>/P<sub>max</sub> ${fmt(A.pmin,1)}/${fmt(A.pmax,1)} m c.a.; prevalenza ${fmt(A.H,1)} m c.a.; ${A.np} pompe da ${fmt(A.Gp*3.6,2)} m³/h, ${fmt(A.W,2)} kW ciascuna (η ${fmt(num(S.aut.eta))}); a = ${A.a} h⁻¹. Volumi: cuscino d'aria ${fmt(A.V1,0)} l → ${A.pick?lab(A.pick.pA):'–'} (${A.pick?.fam||''}${A.pick?.ps?', PS '+fmt(A.pick.ps,A.pick.ps%1?2:0)+' bar':''}); membrana ${fmt(A.V2,0)} l → ${A.pick?lab(A.pick.pM):'–'}; inverter ${fmt(A.V3,0)} l → ${A.pick?lab(A.pick.pI):'–'} (vasi Cordivari V/Z PED). Riserva idrica ${fmt(RS.V,0)} l → ${RS.p?lab(RS.p)+' '+RS.fam.n.toLowerCase():'fuori gamma'}.</p>
+  <h3>Accumulo acqua calda sanitaria</h3>
+  <p>t<sub>f</sub> ${S.acs.tf} °C, t<sub>a</sub> ${S.acs.ta} °C, fluido scaldante ${S.acs.tmand}/${num(S.acs.tmand)-num(S.acs.dt)} °C. Volume ${fmt(H.Vc,0)} l (teorico ${fmt(H.V,0)} l), potenza ${fmt(H.kW,1)} kW (${fmt(H.Qh,0)} kcal/h), serpentino ${isFinite(H.S)?fmt(H.S,2):'–'} m². Taglia commerciale: <b>${HP.p?lab(HP.p)+' Cordivari '+CAT.acs[HP.fam].n:'fuori gamma'}</b>${HP.p?` (V lordo ${fmt(HP.p.vol,0)} l${HP.p.S!=null?', serpentino '+fmt(HP.p.S,1)+' m²':''})`:''}.</p>
+  <div class="tw"><table><thead><tr><th>Utenza</th><th class="n">Q.tà</th><th class="n">C punta l</th><th class="n">t<sub>pu</sub>/t<sub>pr</sub> h</th><th class="n">kW</th><th class="n">V l</th></tr></thead><tbody>${acsRows}</tbody></table></div>
+  <p class="small muted">Calcolo preliminare a supporto della progettazione. Valori di riferimento: Quaderno Caleffi «Impianti idrosanitari», UNI 9182, EN 806-3 (vedi «Metodo e fonti»).</p>`;
+}
+
+// ---------------------------------------------------------------- binding
+function fillBound(){document.querySelectorAll('[data-k]').forEach(el=>{const v=getK(el.dataset.k);el.value=v??'';});}
+function renderAll(){
+  $('#n-mat').innerHTML=matOptions(S.net.mat,false);
+  fillBound(); renderTips(); renderUCOut(); renderHapp(); renderNetTable(); renderNetOut(); renderAut(); renderACSTable(); renderACSOut(); renderRep();
+}
+function refresh(){renderUCOut();renderNetOut();renderAut();renderACSOut();renderRep();save();}
+document.addEventListener('input',e=>{
+  const el=e.target;
+  if(el.dataset.k){setK(el.dataset.k,el.type==='number'?(el.value===''&&el.dataset.k==='aut.pset'?'':num(el.value)):el.value);
+    if(['cfg.dest','cfg.ucTab'].includes(el.dataset.k)){renderAppTable();}
+    if(el.dataset.k==='net.mat'){renderNetTable();}
+    refresh();return;}
+  if(el.dataset.app){curTip().c[el.dataset.app]=num(el.value);updAppTot();refresh();return;}
+  if(el.id==='tip-name'){curTip().name=el.value;$(`.tipbtn[data-tip="${S.sel}"]`).firstChild.textContent=el.value+' ';refresh();return;}
+  if(el.id==='tip-qty'){curTip().qty=num(el.value);refresh();return;}
+  if(el.id==='tip-caf'){curTip().cAF=num(el.value);refresh();return;}
+  if(el.id==='tip-cac'){curTip().cAC=num(el.value);refresh();return;}
+  const tr=el.closest('tr[data-row]');
+  if(tr){const r=S.net.rows.find(x=>x.id===tr.dataset.row);
+    if(el.dataset.rt){r.c[el.dataset.rt]=num(el.value);}
+    else if(el.dataset.rf){const f=el.dataset.rf;r[f]=f==='L'?num(el.value):f==='crit'?(el.checked?1:0):el.value;
+      if(f==='mat'){r.size='auto';renderNetTable();}}
+    refresh();return;}
+  if(el.dataset.happ){const h=S.net.happ[+el.dataset.happ];if(el.dataset.f==='on')h.on=el.checked?1:0;else h.v=num(el.value);refresh();return;}
+  const hr=el.closest('tr[data-hrow]');
+  if(hr){const r=S.acs.rows.find(x=>x.id===hr.dataset.hrow);const f=el.dataset.hf;r[f]=f==='name'?el.value:num(el.value);refresh();return;}
+});
+document.addEventListener('change',e=>{const el=e.target;if(el.type==='checkbox'&&(el.dataset.rf||el.dataset.happ)){el.dispatchEvent(new Event('input',{bubbles:true}));}});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.classList.contains('tab')){showTab(b.dataset.tab);return;}
+  if(b.dataset.tip){S.sel=b.dataset.tip;renderTips();renderUCOut();save();return;}
+  if(b.id==='tipAdd'){const t={id:uid('t'),name:'Nuova tipologia',qty:1,cAF:0,cAC:0,c:{}};S.tips.push(t);S.sel=t.id;renderTips();renderNetTable();refresh();return;}
+  if(b.id==='tipDup'){const o=curTip();const t=JSON.parse(JSON.stringify(o));t.id=uid('t');t.name=o.name+' (copia)';S.tips.push(t);S.sel=t.id;renderTips();renderNetTable();refresh();return;}
+  if(b.id==='tipDel'){if(S.tips.length<2)return;const id=S.sel;S.tips=S.tips.filter(t=>t.id!==id);S.net.rows.forEach(r=>delete r.c[id]);S.sel=S.tips[0].id;renderTips();renderNetTable();refresh();return;}
+  if(b.id==='rowAdd'){S.net.rows.push({id:uid('r'),name:'Nuovo tratto',svc:'AF',L:5,c:{},mat:'',size:'auto',crit:0});renderNetTable();refresh();return;}
+  if(b.dataset.del){S.net.rows=S.net.rows.filter(r=>r.id!==b.dataset.del);renderNetTable();refresh();return;}
+  if(b.id==='aFromNet'){S.aut.G=+calcNet().qOrigAF.toFixed(2);fillBound();refresh();return;}
+  if(b.id==='aPminNet'){S.aut.pmin=Math.ceil(calcNet().pminReqAF);fillBound();refresh();return;}
+  if(b.id==='iFromNet'){S.acs.Gi=+calcNet().qOrigAC.toFixed(2);fillBound();refresh();return;}
+  if(b.id==='acsAdd'){S.acs.rows.push(acsRow($('#acsPreset').value,1));renderACSTable();refresh();return;}
+  if(b.dataset.hdel){S.acs.rows=S.acs.rows.filter(r=>r.id!==b.dataset.hdel);renderACSTable();refresh();return;}
+  if(b.dataset.scn){S.acs.rows=scenario(b.dataset.scn);renderACSTable();refresh();return;}
+  if(b.id==='btnReset'){S=DEFAULT();renderAll();save();return;}
+  if(b.id==='btnPrint'){window.print();return;}
+  if(b.id==='jsonOut'){$('#jsonBox').value=JSON.stringify(S,null,1);$('#jsonMsg').textContent='JSON generato.';return;}
+  if(b.id==='jsonCopy'){const t=$('#jsonBox').value||JSON.stringify(S,null,1);$('#jsonBox').value=t;navigator.clipboard?.writeText(t).then(()=>$('#jsonMsg').textContent='Copiato negli appunti.',()=>{$('#jsonBox').select();$('#jsonMsg').textContent='Testo selezionato: copialo manualmente.';});return;}
+  if(b.id==='jsonIn'){try{const o=JSON.parse($('#jsonBox').value);if(!o.cfg||!o.tips||!o.net||!o.acs)throw 0;S=migrate(o);renderAll();save();$('#jsonMsg').textContent='Progetto caricato.';}catch(err){$('#jsonMsg').textContent='Testo non valido: incolla un JSON generato da questo strumento.';}return;}
+});
+$('#showAll').addEventListener('change',e=>{showAll=e.target.checked;renderAppTable();});
+function showTab(id){document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.tab===id));document.querySelectorAll('section.view').forEach(s=>s.hidden=s.id!=='v-'+id);if(id==='rep')renderRep();try{localStorage.setItem(LS+'_tab',id);}catch(e){}}
+try{if(window.self===window.top)$('#btnPrint').hidden=false;}catch(e){}
+renderAll();
+let t0='uc';try{t0=localStorage.getItem(LS+'_tab')||'uc';}catch(e){}
+showTab(t0);
+</script>
+
+</body>
+</html>
